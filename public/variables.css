@@ -1,0 +1,35 @@
+@import url("fonts/pt-sans/font.css");
+@import url("fonts/pt-serif/font.css");
+@import url("fonts/pt-mono/font.css");
+
+:root {
+  --font-sans: "PT Sans", sans-serif;
+  --font-serif: "PT Serif", serif;
+  --font-mono: "PT Mono", monospace;
+
+  --neutral-0: #ffffff;
+  --neutral-50: #fefefe;
+  --neutral-100: #efefef;
+  --neutral-200: #dcdcdc;
+  --neutral-300: #bdbdbd;
+  --neutral-400: #989898;
+  --neutral-500: #7c7c7c;
+  --neutral-600: #656565;
+  --neutral-700: #525252;
+  --neutral-800: #464646;
+  --neutral-900: #3d3d3d;
+  --neutral-950: #0a0a0a;
+  --neutral-1000: #000000;
+
+  --accent-50: #f2f3fb;
+  --accent-100: #e7e9f8;
+  --accent-200: #d4d7f1;
+  --accent-300: #babde7;
+  --accent-400: #9e9ddc;
+  --accent-500: #8c85cf;
+  --accent-600: #796cbf;
+  --accent-700: #685ba7;
+  --accent-800: #564b88;
+  --accent-900: #48426d;
+  --accent-950: #27233a;
+}

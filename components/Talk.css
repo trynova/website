@@ -1,0 +1,45 @@
+.talk {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.video {
+  flex: 1;
+  aspect-ratio: 16 / 9;
+}
+
+.info {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.metadata {
+  font-size: 0.9rem;
+  color: var(--neutral-800);
+  display: flex;
+  white-space: pre-wrap;
+}
+
+.slides {
+  all: unset;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--neutral-800);
+  display: flex;
+}
+
+.slides > li + li::before {
+  content: "•";
+  padding: 0 0.5rem;
+}
+
+.description {
+  margin-top: 0.5rem;
+}

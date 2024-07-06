@@ -1,0 +1,218 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert@^0.224.0": "jsr:@std/assert@0.224.0",
+      "jsr:@std/assert@^0.226.0": "jsr:@std/assert@0.226.0",
+      "jsr:@std/async@^0.224.0": "jsr:@std/async@0.224.1",
+      "jsr:@std/cli@^0.224.0": "jsr:@std/cli@0.224.6",
+      "jsr:@std/encoding@^0.224.0": "jsr:@std/encoding@0.224.3",
+      "jsr:@std/fmt@^0.224.0": "jsr:@std/fmt@0.224.0",
+      "jsr:@std/fs@^0.224.0": "jsr:@std/fs@0.224.0",
+      "jsr:@std/http@^0.224.0": "jsr:@std/http@0.224.0",
+      "jsr:@std/media-types@^0.224.0": "jsr:@std/media-types@0.224.1",
+      "jsr:@std/path@^0.224.0": "jsr:@std/path@0.224.0",
+      "jsr:@std/streams@^0.224.0": "jsr:@std/streams@0.224.3",
+      "npm:clsx@^2.1.1": "npm:clsx@2.1.1",
+      "npm:lightningcss": "npm:lightningcss@1.24.1",
+      "npm:lightningcss@^1.25.1": "npm:lightningcss@1.25.1",
+      "npm:preact-render-to-string@^6.4.2": "npm:preact-render-to-string@6.5.4_preact@10.22.0",
+      "npm:preact@^10.22.0": "npm:preact@10.22.0"
+    },
+    "jsr": {
+      "@std/assert@0.224.0": {
+        "integrity": "8643233ec7aec38a940a8264a6e3eed9bfa44e7a71cc6b3c8874213ff401967f"
+      },
+      "@std/assert@0.226.0": {
+        "integrity": "0dfb5f7c7723c18cec118e080fec76ce15b4c31154b15ad2bd74822603ef75b3"
+      },
+      "@std/async@0.224.1": {
+        "integrity": "2fda2c8151cc5811a6ca37fe825f1f71c95e02a374abb6ef868e0e19eca814a5"
+      },
+      "@std/cli@0.224.6": {
+        "integrity": "98d7e17a70c1c24980baa2b9a511b29e0a460e7a3b8e3d4e220979d77d5f348e"
+      },
+      "@std/encoding@0.224.3": {
+        "integrity": "5e861b6d81be5359fad4155e591acf17c0207b595112d1840998bb9f476dbdaf"
+      },
+      "@std/fmt@0.224.0": {
+        "integrity": "e20e9a2312a8b5393272c26191c0a68eda8d2c4b08b046bad1673148f1d69851"
+      },
+      "@std/fs@0.224.0": {
+        "integrity": "52a5ec89731ac0ca8f971079339286f88c571a4d61686acf75833f03a89d8e69",
+        "dependencies": [
+          "jsr:@std/assert@^0.224.0",
+          "jsr:@std/path@^0.224.0"
+        ]
+      },
+      "@std/http@0.224.0": {
+        "integrity": "fde48c9133d1d7bb94c134d8f0f01c1a737e6e3879f52580e9ca92217a011e82",
+        "dependencies": [
+          "jsr:@std/assert@^0.224.0",
+          "jsr:@std/async@^0.224.0",
+          "jsr:@std/cli@^0.224.0",
+          "jsr:@std/encoding@^0.224.0",
+          "jsr:@std/fmt@^0.224.0",
+          "jsr:@std/media-types@^0.224.0",
+          "jsr:@std/path@^0.224.0",
+          "jsr:@std/streams@^0.224.0"
+        ]
+      },
+      "@std/media-types@0.224.1": {
+        "integrity": "9e69a5daed37c5b5c6d3ce4731dc191f80e67f79bed392b0957d1d03b87f11e1"
+      },
+      "@std/path@0.224.0": {
+        "integrity": "55bca6361e5a6d158b9380e82d4981d82d338ec587de02951e2b7c3a24910ee6",
+        "dependencies": [
+          "jsr:@std/assert@^0.224.0"
+        ]
+      },
+      "@std/streams@0.224.3": {
+        "integrity": "38755b17defdb8a7f617acb7242ea029ac83a5deeb289b5820a3650cb031e2f6",
+        "dependencies": [
+          "jsr:@std/assert@^0.226.0"
+        ]
+      }
+    },
+    "npm": {
+      "clsx@2.1.1": {
+        "integrity": "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==",
+        "dependencies": {}
+      },
+      "detect-libc@1.0.3": {
+        "integrity": "sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==",
+        "dependencies": {}
+      },
+      "lightningcss-darwin-arm64@1.24.1": {
+        "integrity": "sha512-1jQ12jBy+AE/73uGQWGSafK5GoWgmSiIQOGhSEXiFJSZxzV+OXIx+a9h2EYHxdJfX864M+2TAxWPWb0Vv+8y4w==",
+        "dependencies": {}
+      },
+      "lightningcss-darwin-arm64@1.25.1": {
+        "integrity": "sha512-G4Dcvv85bs5NLENcu/s1f7ehzE3D5ThnlWSDwE190tWXRQCQaqwcuHe+MGSVI/slm0XrxnaayXY+cNl3cSricw==",
+        "dependencies": {}
+      },
+      "lightningcss-darwin-x64@1.24.1": {
+        "integrity": "sha512-R4R1d7VVdq2mG4igMU+Di8GPf0b64ZLnYVkubYnGG0Qxq1KaXQtAzcLI43EkpnoWvB/kUg8JKCWH4S13NfiLcQ==",
+        "dependencies": {}
+      },
+      "lightningcss-darwin-x64@1.25.1": {
+        "integrity": "sha512-dYWuCzzfqRueDSmto6YU5SoGHvZTMU1Em9xvhcdROpmtOQLorurUZz8+xFxZ51lCO2LnYbfdjZ/gCqWEkwixNg==",
+        "dependencies": {}
+      },
+      "lightningcss-freebsd-x64@1.24.1": {
+        "integrity": "sha512-z6NberUUw5ALES6Ixn2shmjRRrM1cmEn1ZQPiM5IrZ6xHHL5a1lPin9pRv+w6eWfcrEo+qGG6R9XfJrpuY3e4g==",
+        "dependencies": {}
+      },
+      "lightningcss-freebsd-x64@1.25.1": {
+        "integrity": "sha512-hXoy2s9A3KVNAIoKz+Fp6bNeY+h9c3tkcx1J3+pS48CqAt+5bI/R/YY4hxGL57fWAIquRjGKW50arltD6iRt/w==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm-gnueabihf@1.24.1": {
+        "integrity": "sha512-NLQLnBQW/0sSg74qLNI8F8QKQXkNg4/ukSTa+XhtkO7v3BnK19TS1MfCbDHt+TTdSgNEBv0tubRuapcKho2EWw==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm-gnueabihf@1.25.1": {
+        "integrity": "sha512-tWyMgHFlHlp1e5iW3EpqvH5MvsgoN7ZkylBbG2R2LWxnvH3FuWCJOhtGcYx9Ks0Kv0eZOBud789odkYLhyf1ng==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm64-gnu@1.24.1": {
+        "integrity": "sha512-AQxWU8c9E9JAjAi4Qw9CvX2tDIPjgzCTrZCSXKELfs4mCwzxRkHh2RCxX8sFK19RyJoJAjA/Kw8+LMNRHS5qEg==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm64-gnu@1.25.1": {
+        "integrity": "sha512-Xjxsx286OT9/XSnVLIsFEDyDipqe4BcLeB4pXQ/FEA5+2uWCCuAEarUNQumRucnj7k6ftkAHUEph5r821KBccQ==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm64-musl@1.24.1": {
+        "integrity": "sha512-JCgH/SrNrhqsguUA0uJUM1PvN5+dVuzPIlXcoWDHSv2OU/BWlj2dUYr3XNzEw748SmNZPfl2NjQrAdzaPOn1lA==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-arm64-musl@1.25.1": {
+        "integrity": "sha512-IhxVFJoTW8wq6yLvxdPvyHv4NjzcpN1B7gjxrY3uaykQNXPHNIpChLB52+wfH+yS58zm1PL4LemUp8u9Cfp6Bw==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-x64-gnu@1.24.1": {
+        "integrity": "sha512-TYdEsC63bHV0h47aNRGN3RiK7aIeco3/keN4NkoSQ5T8xk09KHuBdySltWAvKLgT8JvR+ayzq8ZHnL1wKWY0rw==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-x64-gnu@1.25.1": {
+        "integrity": "sha512-RXIaru79KrREPEd6WLXfKfIp4QzoppZvD3x7vuTKkDA64PwTzKJ2jaC43RZHRt8BmyIkRRlmywNhTRMbmkPYpA==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-x64-musl@1.24.1": {
+        "integrity": "sha512-HLfzVik3RToot6pQ2Rgc3JhfZkGi01hFetHt40HrUMoeKitLoqUUT5owM6yTZPTytTUW9ukLBJ1pc3XNMSvlLw==",
+        "dependencies": {}
+      },
+      "lightningcss-linux-x64-musl@1.25.1": {
+        "integrity": "sha512-TdcNqFsAENEEFr8fJWg0Y4fZ/nwuqTRsIr7W7t2wmDUlA8eSXVepeeONYcb+gtTj1RaXn/WgNLB45SFkz+XBZA==",
+        "dependencies": {}
+      },
+      "lightningcss-win32-x64-msvc@1.24.1": {
+        "integrity": "sha512-joEupPjYJ7PjZtDsS5lzALtlAudAbgIBMGJPNeFe5HfdmJXFd13ECmEM+5rXNxYVMRHua2w8132R6ab5Z6K9Ow==",
+        "dependencies": {}
+      },
+      "lightningcss-win32-x64-msvc@1.25.1": {
+        "integrity": "sha512-9KZZkmmy9oGDSrnyHuxP6iMhbsgChUiu/NSgOx+U1I/wTngBStDf2i2aGRCHvFqj19HqqBEI4WuGVQBa2V6e0A==",
+        "dependencies": {}
+      },
+      "lightningcss@1.24.1": {
+        "integrity": "sha512-kUpHOLiH5GB0ERSv4pxqlL0RYKnOXtgGtVe7shDGfhS0AZ4D1ouKFYAcLcZhql8aMspDNzaUCumGHZ78tb2fTg==",
+        "dependencies": {
+          "detect-libc": "detect-libc@1.0.3",
+          "lightningcss-darwin-arm64": "lightningcss-darwin-arm64@1.24.1",
+          "lightningcss-darwin-x64": "lightningcss-darwin-x64@1.24.1",
+          "lightningcss-freebsd-x64": "lightningcss-freebsd-x64@1.24.1",
+          "lightningcss-linux-arm-gnueabihf": "lightningcss-linux-arm-gnueabihf@1.24.1",
+          "lightningcss-linux-arm64-gnu": "lightningcss-linux-arm64-gnu@1.24.1",
+          "lightningcss-linux-arm64-musl": "lightningcss-linux-arm64-musl@1.24.1",
+          "lightningcss-linux-x64-gnu": "lightningcss-linux-x64-gnu@1.24.1",
+          "lightningcss-linux-x64-musl": "lightningcss-linux-x64-musl@1.24.1",
+          "lightningcss-win32-x64-msvc": "lightningcss-win32-x64-msvc@1.24.1"
+        }
+      },
+      "lightningcss@1.25.1": {
+        "integrity": "sha512-V0RMVZzK1+rCHpymRv4URK2lNhIRyO8g7U7zOFwVAhJuat74HtkjIQpQRKNCwFEYkRGpafOpmXXLoaoBcyVtBg==",
+        "dependencies": {
+          "detect-libc": "detect-libc@1.0.3",
+          "lightningcss-darwin-arm64": "lightningcss-darwin-arm64@1.25.1",
+          "lightningcss-darwin-x64": "lightningcss-darwin-x64@1.25.1",
+          "lightningcss-freebsd-x64": "lightningcss-freebsd-x64@1.25.1",
+          "lightningcss-linux-arm-gnueabihf": "lightningcss-linux-arm-gnueabihf@1.25.1",
+          "lightningcss-linux-arm64-gnu": "lightningcss-linux-arm64-gnu@1.25.1",
+          "lightningcss-linux-arm64-musl": "lightningcss-linux-arm64-musl@1.25.1",
+          "lightningcss-linux-x64-gnu": "lightningcss-linux-x64-gnu@1.25.1",
+          "lightningcss-linux-x64-musl": "lightningcss-linux-x64-musl@1.25.1",
+          "lightningcss-win32-x64-msvc": "lightningcss-win32-x64-msvc@1.25.1"
+        }
+      },
+      "preact-render-to-string@6.5.4_preact@10.22.0": {
+        "integrity": "sha512-06s0E3cEMLoXQznmtJ/K/xbFs3uwo52Qpgf8lzbe+VbF/XzwJ0LxZGtVLZekhaEeC39+W1MEf05F4lUikzPnxA==",
+        "dependencies": {
+          "preact": "preact@10.22.0"
+        }
+      },
+      "preact@10.22.0": {
+        "integrity": "sha512-RRurnSjJPj4rp5K6XoP45Ui33ncb7e4H7WiOHVpjbkvqvA3U+N8Z6Qbo0AE6leGYBV66n8EhEaFixvIu3SkxFw==",
+        "dependencies": {}
+      }
+    }
+  },
+  "redirects": {
+    "https://esm.run/lightningcss-wasm": "https://cdn.jsdelivr.net/npm/lightningcss-wasm/+esm"
+  },
+  "remote": {
+    "https://cdn.jsdelivr.net/npm/lightningcss-wasm/+esm": "665f9f4b7de28c82295a274f363b462aa50e6f3d6e2aeb2239f9ac47607629e3",
+    "https://cdn.jsdelivr.net/npm/napi-wasm@1.1.0/+esm": "cf90a2457afd616021605fd968952d609ac002984053642dce9c73454eee9c8a"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/fs@^0.224.0",
+      "jsr:@std/http@^0.224.0",
+      "jsr:@std/path@^0.224.0",
+      "npm:clsx@^2.1.1",
+      "npm:lightningcss@^1.25.1",
+      "npm:preact-render-to-string@^6.4.2",
+      "npm:preact@^10.22.0"
+    ]
+  }
+}

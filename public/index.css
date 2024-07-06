@@ -1,0 +1,27 @@
+@import url("reset.css");
+@import url("variables.css");
+
+body {
+  font-family: var(--font-sans);
+  color: var(--neutral-950);
+  background-color: var(--neutral-0);
+}
+
+a {
+  all: unset;
+  cursor: pointer;
+}
+
+a:hover {
+  text-decoration: underline 2px;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+
+  padding: 1rem;
+  margin: 0 auto;
+  max-width: 800px;
+  min-height: 100dvh;
+}
