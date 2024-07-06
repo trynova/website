@@ -1,21 +1,27 @@
-import { fromFileUrl, join } from "@std/path";
+import { fromFileUrl, join, toFileUrl } from "@std/path";
 import * as fs from "@std/fs";
 
 /**
  * Recursively walks a directory and yields all files in it.
  */
 export async function* walk(dir: string): AsyncGenerator<string> {
+  dir = fromFileUrl(dir);
   for await (const entry of Deno.readDir(dir)) {
     const path = join(dir, entry.name);
 
     if (entry.isFile) {
-      yield path;
+      yield toFileUrl(path).toString();
     }
 
     if (entry.isDirectory) {
       yield* walk(path);
     }
   }
+}
+
+export async function read(path: string): Promise<string> {
+  path = fromFileUrl(path);
+  return await Deno.readTextFile(path);
 }
 
 /**

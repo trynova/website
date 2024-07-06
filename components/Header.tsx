@@ -11,27 +11,10 @@ export function Header() {
         <Logo />
         <h1>Nova</h1>
       </a>
-      <nav>
+      <nav class={classes.navigation}>
         <a href="/talks">Talks</a>
         <a href="/blog">Blog</a>
-        <a href="/docs">Docs</a>
         <a href="/contribute">Contribute</a>
-
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-          const page = new URL(document.URL).toString();
-          document.querySelectorAll("a").forEach((a) => {
-            const href = a.getAttribute("href");
-            if (href === null) return;
-            const url = new URL(href, document.URL).toString();
-            if (url === page || url + "/" === page) {
-              a.classList.add("active");
-            }
-          });
-        `,
-          }}
-        />
       </nav>
     </header>
   );

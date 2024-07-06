@@ -6,16 +6,21 @@
       "jsr:@std/assert@^0.226.0": "jsr:@std/assert@0.226.0",
       "jsr:@std/async@^0.224.0": "jsr:@std/async@0.224.1",
       "jsr:@std/cli@^0.224.0": "jsr:@std/cli@0.224.6",
+      "jsr:@std/collections@^1.0.2": "jsr:@std/collections@1.0.2",
       "jsr:@std/encoding@^0.224.0": "jsr:@std/encoding@0.224.3",
       "jsr:@std/fmt@^0.224.0": "jsr:@std/fmt@0.224.0",
+      "jsr:@std/front-matter@^0.224.3": "jsr:@std/front-matter@0.224.3",
       "jsr:@std/fs@^0.224.0": "jsr:@std/fs@0.224.0",
       "jsr:@std/http@^0.224.0": "jsr:@std/http@0.224.0",
       "jsr:@std/media-types@^0.224.0": "jsr:@std/media-types@0.224.1",
       "jsr:@std/path@^0.224.0": "jsr:@std/path@0.224.0",
       "jsr:@std/streams@^0.224.0": "jsr:@std/streams@0.224.3",
+      "jsr:@std/toml@^1.0.0-rc.3": "jsr:@std/toml@1.0.0-rc.3",
+      "jsr:@std/yaml@^1.0.0-rc.1": "jsr:@std/yaml@1.0.0-rc.1",
       "npm:clsx@^2.1.1": "npm:clsx@2.1.1",
       "npm:lightningcss": "npm:lightningcss@1.24.1",
       "npm:lightningcss@^1.25.1": "npm:lightningcss@1.25.1",
+      "npm:marked@^13.0.2": "npm:marked@13.0.2",
       "npm:preact-render-to-string@^6.4.2": "npm:preact-render-to-string@6.5.4_preact@10.22.0",
       "npm:preact@^10.22.0": "npm:preact@10.22.0"
     },
@@ -32,11 +37,21 @@
       "@std/cli@0.224.6": {
         "integrity": "98d7e17a70c1c24980baa2b9a511b29e0a460e7a3b8e3d4e220979d77d5f348e"
       },
+      "@std/collections@1.0.2": {
+        "integrity": "cb1834be534f967e86495f6c64fa06f6b3debdaab5b860c2d3194db59cd30157"
+      },
       "@std/encoding@0.224.3": {
         "integrity": "5e861b6d81be5359fad4155e591acf17c0207b595112d1840998bb9f476dbdaf"
       },
       "@std/fmt@0.224.0": {
         "integrity": "e20e9a2312a8b5393272c26191c0a68eda8d2c4b08b046bad1673148f1d69851"
+      },
+      "@std/front-matter@0.224.3": {
+        "integrity": "983e98b6fc90d614540d2176350e4edf7b6ec067b384c03245e2e795b66de9bb",
+        "dependencies": [
+          "jsr:@std/toml@^1.0.0-rc.3",
+          "jsr:@std/yaml@^1.0.0-rc.1"
+        ]
       },
       "@std/fs@0.224.0": {
         "integrity": "52a5ec89731ac0ca8f971079339286f88c571a4d61686acf75833f03a89d8e69",
@@ -72,6 +87,15 @@
         "dependencies": [
           "jsr:@std/assert@^0.226.0"
         ]
+      },
+      "@std/toml@1.0.0-rc.3": {
+        "integrity": "7193135c2a1d67bf54ec1dda0a0c2c8f76ca6a1151eb6ff0779b6d7217a42117",
+        "dependencies": [
+          "jsr:@std/collections@^1.0.2"
+        ]
+      },
+      "@std/yaml@1.0.0-rc.1": {
+        "integrity": "ef57cfec54ce97e05a7659dd7925de5ef2b8d236064d1463b8bbcf0979e87aa7"
       }
     },
     "npm": {
@@ -185,6 +209,10 @@
           "lightningcss-win32-x64-msvc": "lightningcss-win32-x64-msvc@1.25.1"
         }
       },
+      "marked@13.0.2": {
+        "integrity": "sha512-J6CPjP8pS5sgrRqxVRvkCIkZ6MFdRIjDkwUwgJ9nL2fbmM6qGQeB2C16hi8Cc9BOzj6xXzy0jyi0iPIfnMHYzA==",
+        "dependencies": {}
+      },
       "preact-render-to-string@6.5.4_preact@10.22.0": {
         "integrity": "sha512-06s0E3cEMLoXQznmtJ/K/xbFs3uwo52Qpgf8lzbe+VbF/XzwJ0LxZGtVLZekhaEeC39+W1MEf05F4lUikzPnxA==",
         "dependencies": {
@@ -206,11 +234,13 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@std/front-matter@^0.224.3",
       "jsr:@std/fs@^0.224.0",
       "jsr:@std/http@^0.224.0",
       "jsr:@std/path@^0.224.0",
       "npm:clsx@^2.1.1",
       "npm:lightningcss@^1.25.1",
+      "npm:marked@^13.0.2",
       "npm:preact-render-to-string@^6.4.2",
       "npm:preact@^10.22.0"
     ]

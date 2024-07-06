@@ -1,20 +1,23 @@
 {
+  "unstable": ["temporal"],
   "tasks": {
     "each": "deno run -A scripts/each.ts",
-    "build": "deno task each run -A -- pages/*.[jt]s[x]",
-    "watch": "deno task each run -A --watch -- pages/*.[jt]s[x]",
+    "build": "deno task each run -A -- pages/**/*.[jt]s[x]",
+    "watch": "deno task each run -A --watch -- pages/**/*.[jt]s[x]",
     "serve": "deno task watch & deno run -A scripts/serve.ts"
   },
   "imports": {
+    "@std/front-matter": "jsr:@std/front-matter@^0.224.3",
     "@std/fs": "jsr:@std/fs@^0.224.0",
     "@std/http": "jsr:@std/http@^0.224.0",
     "@std/path": "jsr:@std/path@^0.224.0",
     "clsx": "npm:clsx@^2.1.1",
+    "components/": "./components/",
     "lightningcss": "npm:lightningcss@^1.25.1",
+    "marked": "npm:marked@^13.0.2",
     "preact": "npm:preact@^10.22.0",
     "preact-render-to-string": "npm:preact-render-to-string@^6.4.2",
-    "utils/": "./utils/",
-    "components/": "./components/"
+    "utils/": "./utils/"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

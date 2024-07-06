@@ -18,7 +18,7 @@
   width: 2rem;
 }
 
-.header > nav {
+.navigation {
   display: flex;
   gap: 1rem;
 }

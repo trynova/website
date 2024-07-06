@@ -1,0 +1,20 @@
+.container {
+  all: unset;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.link {
+  display: contents;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.container:hover .header > h2 {
+  text-decoration: underline 2px;
+}

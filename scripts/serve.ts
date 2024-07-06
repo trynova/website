@@ -16,7 +16,7 @@ if (import.meta.main) {
 
     // Add .html extension to URLs that don't have an extension
     if (!url.pathname.endsWith("/") && extname(url.pathname) === "") {
-      url.pathname += ".html";
+      url.pathname += "/index.html";
       req = new Request(url, req);
     }
 
