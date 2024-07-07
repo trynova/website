@@ -1,6 +1,7 @@
 import { css } from "utils/css.ts";
 
 import { Logo } from "components/icons/Logo.tsx";
+import { BASE_URL } from "utils/consts.ts";
 
 const classes = await css(import.meta.resolve("./Header.css"));
 
@@ -12,8 +13,8 @@ export function Header() {
         <h1>Nova</h1>
       </a>
       <nav class={classes.navigation}>
-        <a href="/talks">Talks</a>
-        <a href="/blog">Blog</a>
+        <a href={`${BASE_URL}/talks`}>Talks</a>
+        <a href={`${BASE_URL}/blog`}>Blog</a>
         <a href="https://github.com/trynova/nova">Contribute</a>
       </nav>
     </header>
