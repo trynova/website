@@ -1,6 +1,8 @@
-import { transform } from "lightningcss";
+import init, { transform } from "lightningcss";
 
 import { fromFileUrl } from "@std/path";
+
+await init();
 
 /**
  * A map of CSS modules to their class names and transformed code.
