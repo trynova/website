@@ -1,4 +1,5 @@
 import { css } from "utils/css.ts";
+import { NameLink } from "components/NameLink.tsx";
 
 const classes = await css(import.meta.resolve("./Talk.css"));
 
@@ -13,20 +14,12 @@ export interface TalkProps {
     name: string;
     url?: string;
   };
-  date?: string;
+  date?: Temporal.PlainDate;
   slides?: {
     name: string;
     url: string;
   }[];
   youtubeId: string;
-}
-
-function Name({ name, url }: { name: string; url?: string }) {
-  if (url) {
-    return <a href={url}>{name}</a>;
-  }
-
-  return <>{name}</>;
 }
 
 export function Talk({
@@ -52,17 +45,21 @@ export function Talk({
       <section class={classes.info}>
         <h2 class={classes.title}>{title}</h2>
         <section class={classes.metadata}>
+          By{" "}
           <address>
-            <Name {...speaker} />
+            <NameLink {...speaker} />
           </address>
           {event && (
             <>
-              @ <Name {...event} />
+              {" "}at <NameLink {...event} />
             </>
           )}
           {date && (
             <>
-              @ <time datetime={date}>{date}</time>
+              {" "}at{" "}
+              <time datetime={date.toString()}>
+                {date.toLocaleString("sv-SE")}
+              </time>
             </>
           )}
         </section>
@@ -70,7 +67,7 @@ export function Talk({
           <ul class={classes.slides}>
             {slides.map((slide) => (
               <li>
-                <Name {...slide} />
+                <NameLink {...slide} />
               </li>
             ))}
           </ul>
