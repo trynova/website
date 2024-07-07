@@ -1,4 +1,4 @@
-import { Extract, extractYaml } from "@std/front-matter";
+import { extractYaml } from "@std/front-matter";
 import { dirname } from "@std/path";
 
 import { read, walk } from "utils/fs.ts";
@@ -7,7 +7,7 @@ interface BlogPostAttrs {
   title: string;
   description: string;
   date: string | Date;
-  authors: { name: string; url?: string }[];
+  authors: { name: string; url: string }[];
 }
 
 export interface BlogPostMeta {

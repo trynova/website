@@ -17,6 +17,7 @@ const allPosts = await Array.fromAsync(posts());
 function Index() {
   return (
     <Layout>
+      <h1>Blog</h1>
       <ul class={classes.list}>
         {allPosts
           .sort(({ meta: { date: a } }, { meta: { date: b } }) =>
