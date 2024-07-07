@@ -8,7 +8,7 @@ const classes = await css(import.meta.resolve("./Header.css"));
 export function Header() {
   return (
     <header class={classes.header}>
-      <a class={classes.logo} href="/">
+      <a class={classes.logo} href={`${BASE_URL}`}>
         <Logo />
         <h1>Nova</h1>
       </a>
