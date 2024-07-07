@@ -8,5 +8,5 @@ authors:
 ---
 
 As the nova project is growing and we are getting more and more attention,
-getting higher and higher [test262](https://test262.fyi/#|nova) coverage we
-felt a need for a website. And here it is! We hope you like it.
+getting higher and higher [test262](https://test262.fyi/#|nova) coverage we felt
+a need for a website. And here it is! We hope you like it.

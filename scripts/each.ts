@@ -19,7 +19,7 @@ if (import.meta.main) {
   const args = separator === -1 ? [] : Deno.args.slice(0, separator);
   const entries = separator === -1 ? Deno.args : Deno.args.slice(separator + 1);
 
-  await Promise.all(
+  (await Promise.all(
     entries.map((entry) =>
       new Deno.Command("deno", {
         args: [...args, entry],
@@ -27,5 +27,9 @@ if (import.meta.main) {
         stderr: "inherit",
       }).output()
     ),
-  );
+  )).map((output) => {
+    if (!output.success) {
+      Deno.exit(output.code);
+    }
+  });
 }
