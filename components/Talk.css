@@ -1,12 +1,13 @@
 .talk {
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .video {
-  flex: 1;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16/9;
+  block-size: auto;
+  inline-size: 100%;
 }
 
 .info {
@@ -20,17 +21,21 @@
   font-weight: bold;
 }
 
-.metadata {
+.meta {
+  display: block;
   font-size: 0.9rem;
   color: var(--neutral-800);
-  display: flex;
   white-space: pre-wrap;
+}
+
+.meta > * {
+  display: inline-block;
 }
 
 .slides {
   all: unset;
   list-style: none;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--neutral-800);
   display: flex;
 }

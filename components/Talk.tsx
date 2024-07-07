@@ -41,10 +41,11 @@ export function Talk({
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerpolicy="strict-origin-when-cross-origin"
         allowFullScreen
+        loading="lazy"
       />
       <section class={classes.info}>
         <h2 class={classes.title}>{title}</h2>
-        <section class={classes.metadata}>
+        <section class={classes.meta}>
           By{" "}
           <address>
             <NameLink {...speaker} />
