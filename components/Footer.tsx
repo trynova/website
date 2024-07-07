@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer class={classes.footer}>
       <a href="https://github.com/trynova">
-        <CopyLeft /> {new Date().getFullYear()} The Nova Contributers
+        <CopyLeft /> {new Date().getFullYear()} The Nova Contributors
       </a>
     </footer>
   );

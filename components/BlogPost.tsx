@@ -11,7 +11,7 @@ export function BlogPost({ body, meta }: BlogPostProps) {
 
   return (
     <article class={classes.container}>
-      <header class={classes.header}>
+      <header>
         <h1>
           {meta.title}
         </h1>
@@ -22,9 +22,8 @@ export function BlogPost({ body, meta }: BlogPostProps) {
           </time>
           {meta.authors.length >= 1 && (
             <>
-              {" "}by{" "}
-              {meta.authors.map((author) => (
-                <address class={classes.author}>
+              {" "}by {meta.authors.map((author) => (
+                <address>
                   <a href={author.url}>{author.name}</a>
                 </address>
               ))}

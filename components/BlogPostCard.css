@@ -3,18 +3,19 @@
   list-style: none;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
 
 .link {
   display: contents;
 }
 
-.header {
+.meta {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
 }
 
-.container:hover .header > h2 {
+.container:hover .title {
   text-decoration: underline 2px;
 }

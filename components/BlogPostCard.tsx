@@ -8,12 +8,27 @@ export function BlogPostCard({ file, meta }: BlogPostProps) {
   return (
     <li class={classes.container}>
       <a class={classes.link} href={href(file)}>
-        <header class={classes.header}>
-          <h2>{meta.title}</h2>
-          <time datetime={meta.date.toString()}>
-            {meta.date.toLocaleString("sv-SE")}
-          </time>
+        <header>
+          <h2 class={classes.title}>
+            {meta.title}
+          </h2>
+          <section class={classes.meta}>
+            Published{" "}
+            <time datetime={meta.date.toString()}>
+              {meta.date.toLocaleString("sv-SE")}
+            </time>
+            {meta.authors.length >= 1 && (
+              <>
+                {" "}by {meta.authors.map((author) => (
+                  <address>
+                    {author.name}
+                  </address>
+                ))}
+              </>
+            )}
+          </section>
         </header>
+
         <p>{meta.description}</p>
       </a>
     </li>

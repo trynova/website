@@ -4,17 +4,10 @@
   gap: 1rem;
 }
 
-.header {
-
-}
-
 .meta {
   display: flex;
   white-space: pre-wrap;
   font-size: 0.9rem;
-}
-
-.author {
 }
 
 .body {
