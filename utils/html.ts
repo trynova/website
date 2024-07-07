@@ -1,4 +1,5 @@
 import { globalStyles } from "utils/css.ts";
+import { BASE_URL } from "utils/consts.ts";
 
 export interface HTMLOptions {
   title: string;
@@ -18,7 +19,7 @@ export function html(body: string, options: HTMLOptions) {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/index.css" />
+        <link rel="stylesheet" href="${BASE_URL}/index.css" />
         <style>
           ${Object.values(globalStyles).map(({ code }) => code).join("\n\n")}
         </style>

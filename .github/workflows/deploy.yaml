@@ -28,7 +28,7 @@ jobs:
         with:
           deno-version: v1.x
       - name: Build
-        run: deno task build
+        run: BASE_URL=/nova-website deno task build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
