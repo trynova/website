@@ -1,16 +1,20 @@
 import { renderToString } from "preact-render-to-string";
-import * as marked from "marked";
 
 import { html } from "utils/html.ts";
 import { output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
-import { BlogPost, posts } from "./utils.ts";
+import { BlogPost } from "components/BlogPost.tsx";
 
-function Post({ body }: BlogPost) {
-  const html = marked.parse(body, { async: false }) as string;
-  return <Layout dangerouslySetInnerHTML={{ __html: html }} />;
+import { BlogPostProps, posts } from "./utils.ts";
+
+function Post(props: BlogPostProps) {
+  return (
+    <Layout>
+      <BlogPost {...props} />
+    </Layout>
+  );
 }
 
 if (import.meta.main) {

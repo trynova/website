@@ -1,0 +1,56 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header {
+
+}
+
+.meta {
+  display: flex;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
+
+.author {
+}
+
+.body {
+  word-wrap: break-word;
+
+  > *:first-child {
+    margin-top: 0 !important;
+  }
+
+  > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  a {
+    text-decoration: underline 1px;
+  }
+
+  a:hover {
+    text-decoration: underline 2px;
+  }
+
+  hr {
+    background-color: var(--neutral-400);
+    height: 2px;
+    margin: 2rem 1rem;
+    border: none;
+  }
+
+  p,
+  blockquote,
+  ul,
+  ol,
+  dl,
+  table,
+  pre,
+  details {
+    margin-bottom: 2rem;
+  }
+}

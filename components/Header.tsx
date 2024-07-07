@@ -14,7 +14,7 @@ export function Header() {
       <nav class={classes.navigation}>
         <a href="/talks">Talks</a>
         <a href="/blog">Blog</a>
-        <a href="/contribute">Contribute</a>
+        <a href="https://github.com/trynova/nova">Contribute</a>
       </nav>
     </header>
   );

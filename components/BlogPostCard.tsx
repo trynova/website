@@ -1,10 +1,10 @@
 import { css } from "utils/css.ts";
-import { BlogPost } from "../pages/blog/utils.ts";
+import { BlogPostProps } from "../pages/blog/utils.ts";
 import { href } from "utils/path.ts";
 
 const classes = await css(import.meta.resolve("./BlogPostCard.css"));
 
-export function BlogPostCard({ file, meta }: BlogPost) {
+export function BlogPostCard({ file, meta }: BlogPostProps) {
   return (
     <li class={classes.container}>
       <a class={classes.link} href={href(file)}>

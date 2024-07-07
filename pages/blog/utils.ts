@@ -14,16 +14,16 @@ export interface BlogPostMeta {
   title: string;
   description: string;
   date: Temporal.PlainDate;
-  authors: { name: string; url?: string }[];
+  authors: { name: string; url: string }[];
 }
 
-export interface BlogPost {
+export interface BlogPostProps {
   file: string;
   body: string;
   meta: BlogPostMeta;
 }
 
-export async function* posts(): AsyncGenerator<BlogPost> {
+export async function* posts(): AsyncGenerator<BlogPostProps> {
   for await (const file of walk(dirname(import.meta.url))) {
     if (file.endsWith(".md")) {
       const text = await read(file);
