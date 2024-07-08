@@ -10,6 +10,7 @@ body {
 a {
   all: unset;
   cursor: pointer;
+  text-decoration: underline;
 }
 
 a:hover {

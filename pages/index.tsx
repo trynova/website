@@ -11,7 +11,9 @@ function Index() {
     <Layout>
       <h1>Welcome!</h1>
       <p>
-        Nova is a ECMAScript and WASM engine written in Rust and following{" "}
+        Nova is a <a href="https://tc39.es/ecma262/">ECMAScript</a> and{" "}
+        <a href="https://webassembly.org/">WebAssembly</a>{" "}
+        engine written in Rust and following{" "}
         <a href="https://en.wikipedia.org/wiki/Data-oriented_design">
           data-oriented design principles
         </a>. It is currently nothing more than a fun experiment to learn and to
