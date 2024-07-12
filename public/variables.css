@@ -33,3 +33,21 @@
   --accent-900: #48426d;
   --accent-950: #27233a;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neutral-0: #000000;
+    --neutral-50: #0a0a0a;
+    --neutral-100: #3d3d3d;
+    --neutral-200: #464646;
+    --neutral-300: #525252;
+    --neutral-400: #656565;
+    --neutral-500: #7c7c7c;
+    --neutral-600: #989898;
+    --neutral-700: #bdbdbd;
+    --neutral-800: #dcdcdc;
+    --neutral-900: #efefef;
+    --neutral-950: #fefefe;
+    --neutral-1000: #ffffff;
+  }
+}
