@@ -20,8 +20,11 @@ export function html(body: string, options: HTMLOptions) {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="${BASE_URL}/index.css" />
+        <link rel="icon" href="${BASE_URL}/favicon.svg" sizes="any" type="image/svg+xml">
         <style>
-          ${Object.values(globalStyles).map(({ code }) => code).join("\n\n")}
+          ${Object.values(globalStyles)
+            .map(({ code }) => code)
+            .join("\n\n")}
         </style>
         <title>${options.title}</title>
       </head>
