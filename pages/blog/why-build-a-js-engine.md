@@ -114,6 +114,6 @@ But equally, the downsides can be huge to the point where the entire experiment
 is found to be a failure.
 
 Only time and work will tell. If you want to get involved, head over into
-[our GitHub pages](https://github.com/trynova/nova), jump on
+[our GitHub repo](https://github.com/trynova/nova), jump on
 [our Discord](https://discord.gg/RTrgJzXKUM), or get in touch otherwise and
 start hacking away. We're looking forward to meeting you!
