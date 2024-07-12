@@ -5,6 +5,7 @@ export interface HTMLOptions {
   title: string;
   language?: string;
   description?: string;
+  author?: string;
 }
 
 /**
@@ -23,18 +24,18 @@ export function html(body: string, options: HTMLOptions) {
         <link rel="stylesheet" href="${BASE_URL}/index.css" />
         <link rel="icon" href="${BASE_URL}/favicon.svg" sizes="any" type="image/svg+xml">
         <style>
-          ${
-    Object.values(globalStyles)
-      .map(({ code }) => code)
-      .join("\n\n")
-  }
+          ${Object.values(globalStyles)
+            .map(({ code }) => code)
+            .join("\n\n")}
         </style>
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://trynova.dev/" />
         <meta property="og:title" content="${options.title}" />
         <meta property="og:description" content="${
-    options.description ?? "JS engine lolz"
-  }" />
+          options.description ?? "JS engine lolz"
+        }" />
+        <meta property="description" content="${options.description ?? "JS engine lolz"}" />
+        ${options.author ? `<meta name="author" content="${options.author}" />` : ""}
         <title>${options.title}</title>
       </head>
       <body class="root">
