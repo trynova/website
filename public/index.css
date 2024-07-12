@@ -2,27 +2,45 @@
 @import url("variables.css");
 
 body {
-  font-family: var(--font-sans);
-  color: var(--neutral-950);
-  background-color: var(--neutral-0);
+    font-family: var(--font-sans);
+    color: var(--neutral-950);
+    background-color: var(--neutral-0);
+}
+
+body::-webkit-scrollbar {
+    width: var(--sb-size);
+}
+
+body::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+}
+
+body::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    body {
+        scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+    }
 }
 
 a {
-  all: unset;
-  cursor: pointer;
-  text-decoration: underline;
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 a:hover {
-  text-decoration: underline 2px;
+    text-decoration: underline 2px;
 }
 
 .root {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 
-  padding: 1rem;
-  margin: 0 auto;
-  max-width: 800px;
-  min-height: 100dvh;
+    padding: 1rem;
+    margin: 0 auto;
+    max-width: 800px;
+    min-height: 100dvh;
 }
