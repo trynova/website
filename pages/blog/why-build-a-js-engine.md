@@ -102,7 +102,7 @@ used. The best data structure in the world, bar none, is the humble vector (or
 array by another name). A data structure that carries within it multiple
 logically related but algorithmically unrelated pieces of data is a terrible
 data structure: Loading some of the data in the structure loads all of the data
-in the structure but likely loads none of the data that you're about use in
+in the structure but likely loads none of the data that you're about to use in
 combination with your structure's data to do new calculations.
 
 So what we want to explore is then: What sort of an engine do you get when
