@@ -32,6 +32,6 @@ function Index() {
 if (import.meta.main) {
   await write(
     output(import.meta.url),
-    html(renderToString(<Index />), { title: "Nova" }),
+    html(renderToString(<Index />), { title: "Blog ▲ Nova" }),
   );
 }

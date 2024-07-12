@@ -21,7 +21,10 @@ if (import.meta.main) {
   for await (const post of posts()) {
     await write(
       output(post.file),
-      html(renderToString(<Post {...post} />), { title: "Nova" }),
+      html(renderToString(<Post {...post} />), {
+        title: `${post.meta.title} ▲ Nova`,
+        description: post.meta.description,
+      }),
     );
   }
 }
