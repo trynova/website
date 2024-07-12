@@ -24,7 +24,7 @@ The JavaScript world was then a peaceful place where all these lived happily
 together, and all were equal. That is, as long as you don't think about the
 different API support, the competition, and underhanded tactics and all that.
 But at least on the server side things were peaceful: There was only Node.js.
-That is, until Ryan Dahl nailed his ten theses on the door of the JSConf EU
+That is, until Ryan Dahl [nailed his ten theses on the door](https://www.youtube.com/watch?v=M3BM9TB-8yA) of the JSConf EU
 backstage in 2018, and Deno was born.
 
 Deno was still fairly simple: It still runs the same V8 JavaScript engine under
