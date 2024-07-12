@@ -24,8 +24,9 @@ The JavaScript world was then a peaceful place where all these lived happily
 together, and all were equal. That is, as long as you don't think about the
 different API support, the competition, and underhanded tactics and all that.
 But at least on the server side things were peaceful: There was only Node.js.
-That is, until Ryan Dahl [nailed his ten theses on the door](https://www.youtube.com/watch?v=M3BM9TB-8yA) of the JSConf EU
-backstage in 2018, and Deno was born.
+That is, until Ryan Dahl
+[nailed his ten theses on the door](https://www.youtube.com/watch?v=M3BM9TB-8yA)
+of the JSConf EU backstage in 2018, and Deno was born.
 
 Deno was still fairly simple: It still runs the same V8 JavaScript engine under
 the hood. But then Bun came along, and it uses JavaScriptCore (of Safari fame)
@@ -44,9 +45,12 @@ engine built in only the last few years. It has also acted as the flagship for
 specification-oriented JavaScript engine design, though it was probably not the
 first one to envision of this idea.
 
-Many other engines exist beside these as well: [Boa](https://boajs.dev/), [Kiesel](https://kiesel.dev/), [GraalJS](https://github.com/oracle/graaljs), [engine262](https://engine262.js.org/),
-and then some less traditional ones like [Hermes](https://github.com/facebook/hermes) and [Porffor](https://porffor.dev/). So, if we have such
-a great variety of engines, why build yet another?
+Many other engines exist beside these as well: [Boa](https://boajs.dev/),
+[Kiesel](https://kiesel.dev/), [GraalJS](https://github.com/oracle/graaljs),
+[engine262](https://engine262.js.org/), and then some more experimental ones
+like [Hermes](https://github.com/facebook/hermes) and
+[Porffor](https://porffor.dev/). So, if we have such a great variety of engines,
+why build yet another?
 
 ## The Bad
 
