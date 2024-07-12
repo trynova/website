@@ -44,8 +44,8 @@ engine built in only the last few years. It has also acted as the flagship for
 specification-oriented JavaScript engine design, though it was probably not the
 first one to envision of this idea.
 
-Many other engines exist beside these as well: Boa, Kiesel, GraalJS, engine262,
-and then some less traditional ones like Hermes and Porffor. So, if we have such
+Many other engines exist beside these as well: [Boa](https://boajs.dev/), [Kiesel](https://kiesel.dev/), [GraalJS](https://github.com/oracle/graaljs), [engine262](https://engine262.js.org/),
+and then some less traditional ones like [Hermes](https://github.com/facebook/hermes) and [Porffor](https://porffor.dev/). So, if we have such
 a great variety of engines, why build yet another?
 
 ## The Bad
