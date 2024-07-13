@@ -19,6 +19,9 @@ export async function* walk(dir: string): AsyncGenerator<string> {
   }
 }
 
+/**
+ * Reads a file from a `file:` URL.
+ */
 export async function read(path: string): Promise<string> {
   path = fromFileUrl(path);
   return await Deno.readTextFile(path);

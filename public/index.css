@@ -7,6 +7,11 @@ body {
     background-color: var(--neutral-0);
 }
 
+*::selection {
+    background-color: var(--selection-color);
+    color: white;
+}
+
 body::-webkit-scrollbar {
     width: var(--sb-size);
 }
