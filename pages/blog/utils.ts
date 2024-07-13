@@ -24,7 +24,7 @@ export interface BlogPostProps {
 }
 
 export async function* posts(): AsyncGenerator<BlogPostProps> {
-  for await (const file of walk(dirname(import.meta.url) + "/posts")) {
+  for await (const file of walk(dirname(import.meta.url) + "/~")) {
     if (file.endsWith(".md")) {
       const text = await read(file);
       const { attrs, body } = extractYaml<BlogPostAttrs>(text);
