@@ -33,6 +33,7 @@
     --accent-900: #48426d;
     --accent-950: #27233a;
 
+    --selection-color: #343136;
     --sb-track-color: #636161;
     --sb-thumb-color: #e0e0e0;
     --sb-size: 14px;
@@ -53,5 +54,6 @@
         --neutral-900: #efefef;
         --neutral-950: #fefefe;
         --neutral-1000: #ffffff;
+        --selection-color: #727073;
     }
 }

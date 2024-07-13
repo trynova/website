@@ -1,6 +1,6 @@
 .footer {
-  display: flex;
-  justify-content: center;
-  border-top: 2px solid var(--neutral-950);
-  padding-top: 1rem;
+    display: flex;
+    justify-content: center;
+    border-top: 2px solid var(--neutral-950);
+    padding-top: 1rem;
 }

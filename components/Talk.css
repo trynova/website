@@ -1,50 +1,50 @@
 .talk {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .video {
-  aspect-ratio: 16/9;
-  block-size: auto;
-  inline-size: 100%;
+    aspect-ratio: 16/9;
+    block-size: auto;
+    inline-size: 100%;
 }
 
 .info {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
+    flex: 2;
+    display: flex;
+    flex-direction: column;
 }
 
 .title {
-  font-size: 1.25rem;
-  font-weight: bold;
+    font-size: 1.25rem;
+    font-weight: bold;
 }
 
 .meta {
-  display: block;
-  font-size: 0.9rem;
-  color: var(--neutral-800);
-  white-space: pre-wrap;
+    display: block;
+    font-size: 0.9rem;
+    color: var(--neutral-800);
+    white-space: pre-wrap;
 }
 
 .meta > * {
-  display: inline-block;
+    display: inline-block;
 }
 
 .slides {
-  all: unset;
-  list-style: none;
-  font-size: 0.9rem;
-  color: var(--neutral-800);
-  display: flex;
+    all: unset;
+    list-style: none;
+    font-size: 0.9rem;
+    color: var(--neutral-800);
+    display: flex;
 }
 
 .slides > li + li::before {
-  content: "•";
-  padding: 0 0.5rem;
+    content: "•";
+    padding: 0 0.5rem;
 }
 
 .description {
-  margin-top: 0.5rem;
+    margin-top: 0.5rem;
 }
