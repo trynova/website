@@ -7,6 +7,10 @@
   font-variant: tabular-nums;
 }
 
+.chart tspan {
+  fill: var(--neutral-800);
+}
+
 .chart tspan[x="0"] {
   font-size: 10px;
 }

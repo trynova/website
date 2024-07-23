@@ -55,8 +55,15 @@ function Test262() {
         svgClass={classes.chart}
         options={{
           scales: {
+            x: {
+              grid: {
+                color: "var(--neutral-400)",
+              },
+            },
             y: {
-              beginAtZero: true,
+              grid: {
+                color: "var(--neutral-400)",
+              },
             },
           },
         }}
