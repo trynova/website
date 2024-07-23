@@ -22,7 +22,7 @@ if (import.meta.main) {
     await write(
       output(post.file),
       html(renderToString(<Post {...post} />), {
-        title: `${post.meta.title} ▲ Nova`,
+        title: `${post.meta.title} · Nova`,
         description: post.meta.description,
         author: post.meta.authors.map((author) => author.name).join(", "),
       }),

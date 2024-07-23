@@ -1,0 +1,12 @@
+.chart {
+  height: 100%;
+}
+
+.chart * {
+  font-family: var(--font-mono);
+  font-variant: tabular-nums;
+}
+
+.chart tspan[x="0"] {
+  font-size: 10px;
+}

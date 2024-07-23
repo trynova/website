@@ -1,7 +1,7 @@
 import { renderToString } from "preact-render-to-string";
 
 import { html } from "utils/html.ts";
-import { output } from "utils/path.ts";
+import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
@@ -23,8 +23,8 @@ function Index() {
       <p>
         The engine is still very limited in it's capabilities only passing about
         {" "}
-        <a href="https://test262.fyi/#|nova">
-          25% of the test262 test suite
+        <a href={href(import.meta.resolve("./test262.tsx"))}>
+          33% of the test262 test suite
         </a>.{" "}
         However development is ongoing and we are quickly improving the engine.
         If you are interested in the project, please check out the{" "}
