@@ -104,4 +104,9 @@ if (import.meta.main) {
     output(import.meta.url),
     html(renderToString(<Test262 />), { title: "Test262 · Nova" }),
   );
+
+  // HACK: Exit process to prevent hanging. There is a bug loose in the code
+  // preventing the process from exiting. Probably a promise that is not being
+  // awaited or octokit which needs to be closed somehow.
+  Deno.exit();
 }
