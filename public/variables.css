@@ -37,11 +37,11 @@
     --warning: #d9a620;
     --error: #b52b2b;
 
-    --selection-color: var(--neutral-400);
+    --selection-color: var(--neutral-950);
 
-    --scrollbar-track-color: var(--neutral-400);
-    --scrollbar-thumb-color: var(--neutral-100);
-    --scrollbar-size: 14px;
+    --scrollbar-track-color: var(--neutral-0);
+    --scrollbar-thumb-color: var(--neutral-950);
+    --scrollbar-size: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
