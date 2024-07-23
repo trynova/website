@@ -6,7 +6,7 @@ import { BASE_URL, BUILD_PATH, PAGES_PATH } from "utils/consts.ts";
 export function output(path: string): string {
   return path
     .replace(PAGES_PATH, BUILD_PATH)
-    .replace(/\.\w+$/, ".html");
+    .replace(/\.(tsx|md)$/, ".html");
 }
 
 /**
