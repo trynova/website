@@ -15,7 +15,7 @@ export function Header() {
       <nav class={classes.navigation}>
         <a href={`${BASE_PATH}/talks`}>Talks</a>
         <a href={`${BASE_PATH}/blog`}>Blog</a>
-        <a href={`https://test262.fyi/#|nova`}>Test262</a>
+        <a href={`${BASE_PATH}/test262`}>Test262</a>
         <a href="https://github.com/trynova/nova">Contribute</a>
       </nav>
     </header>
