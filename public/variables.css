@@ -33,10 +33,15 @@
     --accent-900: #48426d;
     --accent-950: #27233a;
 
-    --selection-color: #343136;
-    --sb-track-color: #636161;
-    --sb-thumb-color: #e0e0e0;
-    --sb-size: 14px;
+    --success: #2e854b;
+    --warning: #d9a620;
+    --error: #b52b2b;
+
+    --selection-color: var(--neutral-400);
+
+    --scrollbar-track-color: var(--neutral-400);
+    --scrollbar-thumb-color: var(--neutral-100);
+    --scrollbar-size: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +59,7 @@
         --neutral-900: #efefef;
         --neutral-950: #fefefe;
         --neutral-1000: #ffffff;
+
         --selection-color: #727073;
     }
 }
