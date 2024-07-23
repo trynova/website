@@ -14,6 +14,11 @@ export const PUBLIC_PATH = import.meta.resolve("../public");
 export const BUILD_PATH = import.meta.resolve("../build");
 
 /**
- * The base URL for the website.
+ * The base path for the website.
  */
-export const BASE_URL = Deno.env.get("BASE_URL") ?? "";
+export const BASE_PATH = Deno.env.get("BASE_PATH") ?? "";
+
+/**
+ * The url of the website.
+ */
+export const LOCATION = Deno.env.get("LOCATION") ?? "https://trynova.dev";

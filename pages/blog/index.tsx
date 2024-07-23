@@ -3,8 +3,9 @@ import { Feed } from "feed";
 import * as marked from "marked";
 
 import { html } from "utils/html.ts";
-import { output, href } from "utils/path.ts";
+import { output, absolute_href } from "utils/path.ts";
 import { write } from "utils/fs.ts";
+import { LOCATION } from "utils/consts.ts";
 
 import { Layout } from "components/Layout.tsx";
 import { BlogPostCard } from "components/BlogPostCard.tsx";
@@ -40,18 +41,16 @@ if (import.meta.main) {
   const feed = new Feed({
     title: "Nova Blog",
     description: "Nova Blog",
-    id: "https://trynova.dev/blog",
-    link: "https://trynova.dev/blog",
+    id: `${LOCATION}/blog`,
+    link: `${LOCATION}/blog`,
     language: "en",
-    favicon: "https://trynova.dev/favicon.svg",
+    favicon: `${LOCATION}/favicon.svg`,
     copyright: `Copyleft ${new Date().getFullYear()} The Nova Contributors`,
   });
 
   allPosts
     .forEach((post) => {
-      // BASE_URL doesn't seem to be defined, even in the prodution build, so `href` sometimes just returns a path, so we have to handle that case
-      const possiblyPath = href(post.file);
-      const link = possiblyPath.startsWith('https://') ? possiblyPath : `https://trynova.dev${possiblyPath}`;
+      const link = absolute_href(post.file);
 
       feed.addItem({
         title: post.meta.title,
@@ -64,12 +63,12 @@ if (import.meta.main) {
           link: author.url
         })),
         date: new Date(
-          post.meta.date.toZonedDateTime('Etc/Greenwich').epochMilliseconds
+          post.meta.date.toZonedDateTime("UTC").epochMilliseconds
         ),
       });
     });
 
-  await write(output(import.meta.resolve('./feed.rss')), feed.rss2());
-  await write(output(import.meta.resolve('./feed.atom')), feed.atom1());
-  await write(output(import.meta.resolve('./feed.json')), feed.json1());
+  await write(output(import.meta.resolve("./feed.rss")), feed.rss2());
+  await write(output(import.meta.resolve("./feed.atom")), feed.atom1());
+  await write(output(import.meta.resolve("./feed.json")), feed.json1());
 }
