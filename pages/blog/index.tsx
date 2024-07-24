@@ -3,7 +3,7 @@ import { Feed } from "feed";
 import * as marked from "marked";
 
 import { html } from "utils/html.ts";
-import { output, absolute_href } from "utils/path.ts";
+import { output, absoluteHref } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 import { LOCATION } from "utils/consts.ts";
 
