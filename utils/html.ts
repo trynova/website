@@ -41,9 +41,9 @@ export function html(body: string, options: HTMLOptions) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="${BASE_PATH}/index.css" />
         <link rel="icon" href="${BASE_PATH}/favicon.svg" sizes="any" type="image/svg+xml">
-        <link rel="alternate" type="application/rss+xml" href="/blog/feed.rss" title="Nova Blog (RSS)">
-        <link rel="alternate" type="application/atom+xml" href="/blog/feed.atom" title="Nova Blog (Atom)">
-        <link rel="alternate" type="application/feed+json" href="/blog/feed.json" title="Nova Blog (JSON)">
+        <link rel="alternate" type="application/rss+xml" href={`${BASE_PATH}/blog/feed.rss`} title="Nova Blog (RSS)">
+        <link rel="alternate" type="application/atom+xml" href={`${BASE_PATH}/blog/feed.atom`} title="Nova Blog (Atom)">
+        <link rel="alternate" type="application/feed+json" href={`${BASE_PATH}/blog/feed.json`} title="Nova Blog (JSON)">
         <style>
           ${
     Object.values(globalStyles)
