@@ -21,7 +21,7 @@ export function href(path: string): string {
 /**
  * Takes a page path and returns it as an absolute http(s) URL.
  */
-export function absolute_href(path: string): string {
+export function absoluteHref(path: string): string {
   return LOCATION + path
     .replace(PAGES_PATH, "")
     .replace(/\.\w+$/, "");
