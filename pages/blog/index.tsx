@@ -50,7 +50,7 @@ if (import.meta.main) {
 
   allPosts
     .forEach((post) => {
-      const link = absolute_href(post.file);
+      const link = absoluteHref(post.file);
 
       feed.addItem({
         title: post.meta.title,
