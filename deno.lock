@@ -19,6 +19,7 @@
       "jsr:@std/yaml@^1.0.0-rc.1": "jsr:@std/yaml@1.0.0-rc.1",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:clsx@^2.1.1": "npm:clsx@2.1.1",
+      "npm:feed@^4.2.2": "npm:feed@4.2.2",
       "npm:marked@^13.0.2": "npm:marked@13.0.2",
       "npm:preact-render-to-string@^6.4.2": "npm:preact-render-to-string@6.5.5_preact@10.22.1",
       "npm:preact@^10.22.0": "npm:preact@10.22.1"
@@ -106,6 +107,12 @@
         "integrity": "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==",
         "dependencies": {}
       },
+      "feed@4.2.2": {
+        "integrity": "sha512-u5/sxGfiMfZNtJ3OvQpXcvotFpYkL0n9u9mM2vkui2nGo8b4wvDkJ8gAkYqbA8QpGyFCv3RK0Z+Iv+9veCS9bQ==",
+        "dependencies": {
+          "xml-js": "xml-js@1.6.11"
+        }
+      },
       "marked@13.0.2": {
         "integrity": "sha512-J6CPjP8pS5sgrRqxVRvkCIkZ6MFdRIjDkwUwgJ9nL2fbmM6qGQeB2C16hi8Cc9BOzj6xXzy0jyi0iPIfnMHYzA==",
         "dependencies": {}
@@ -119,6 +126,16 @@
       "preact@10.22.1": {
         "integrity": "sha512-jRYbDDgMpIb5LHq3hkI0bbl+l/TQ9UnkdQ0ww+lp+4MMOdqaUYdFc5qeyP+IV8FAd/2Em7drVPeKdQxsiWCf/A==",
         "dependencies": {}
+      },
+      "sax@1.4.1": {
+        "integrity": "sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==",
+        "dependencies": {}
+      },
+      "xml-js@1.6.11": {
+        "integrity": "sha512-7rVi2KMfwfWFl+GpPg6m80IVMWXLRjO+PxTq7V2CDhoGak0wzYzFgUY2m4XJ47OGdXd8eLE8EmwfAmdjw7lC1g==",
+        "dependencies": {
+          "sax": "sax@1.4.1"
+        }
       }
     }
   },
@@ -198,6 +215,7 @@
       "jsr:@std/http@^0.224.0",
       "jsr:@std/path@^0.224.0",
       "npm:clsx@^2.1.1",
+      "npm:feed@^4.2.2",
       "npm:marked@^13.0.2",
       "npm:preact-render-to-string@^6.4.2",
       "npm:preact@^10.22.0"

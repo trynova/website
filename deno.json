@@ -14,6 +14,7 @@
     "@std/path": "jsr:@std/path@^0.224.0",
     "clsx": "npm:clsx@^2.1.1",
     "components/": "./components/",
+    "feed": "npm:feed@^4.2.2",
     "lightningcss": "https://esm.sh/lightningcss-wasm@1.25.1",
     "marked": "npm:marked@^13.0.2",
     "preact": "npm:preact@^10.22.0",
