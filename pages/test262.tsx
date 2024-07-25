@@ -20,7 +20,7 @@ const commits = await octokit.rest.repos.listCommits({
   path: "tests/expectations.json",
 });
 
-const data = await Promise.all(commits.data.map(async (commit) => {
+const data = (await Promise.all(commits.data.map(async (commit) => {
   const expectations = await (await fetch(
     `https://raw.githubusercontent.com/trynova/nova/${commit.sha}/tests/expectations.json`,
   )).json() as Record<string, "PASS" | "FAIL" | "CRASH" | "TIMEOUT">;
@@ -28,7 +28,7 @@ const data = await Promise.all(commits.data.map(async (commit) => {
   return {
     sha: commit.sha,
     message: commit.commit.message,
-    date: commit.commit.author?.date,
+    date: Temporal.Instant.from(commit.commit.author?.date),
     expectations,
     metrics: {
       pass: results.filter((result) => result === "PASS").length,
@@ -37,7 +37,7 @@ const data = await Promise.all(commits.data.map(async (commit) => {
       timeout: results.filter((result) => result === "TIMEOUT").length,
     },
   };
-}));
+}))).sort(({ date: a }, { date: b }) => Temporal.Instant.compare(a, b));
 
 function Test262() {
   return (
@@ -86,6 +86,7 @@ function Test262() {
               label: "Crash",
               data: data.map(({ metrics }) => metrics.crash),
               borderColor: "var(--error)",
+              borderDash: [5, 5],
               pointStyle: false,
             },
             {

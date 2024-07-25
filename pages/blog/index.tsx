@@ -3,7 +3,7 @@ import { Feed } from "feed";
 import * as marked from "marked";
 
 import { html } from "utils/html.ts";
-import { output, absoluteHref } from "utils/path.ts";
+import { absoluteHref, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 import { LOCATION } from "utils/consts.ts";
 
@@ -60,10 +60,10 @@ if (import.meta.main) {
         content: marked.parse(post.body, { async: false }) as string,
         author: post.meta.authors.map((author) => ({
           name: author.name,
-          link: author.url
+          link: author.url,
         })),
         date: new Date(
-          post.meta.date.toZonedDateTime("UTC").epochMilliseconds
+          post.meta.date.toZonedDateTime("UTC").epochMilliseconds,
         ),
       });
     });
