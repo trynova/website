@@ -18,6 +18,7 @@ const commits = await octokit.rest.repos.listCommits({
   owner: "trynova",
   repo: "nova",
   path: "tests/expectations.json",
+  per_page: 100,
 });
 
 const data = (await Promise.all(commits.data.map(async (commit) => {
