@@ -37,9 +37,7 @@ function dataset(datapoints: typeof data, result: keyof Metrics["results"]) {
   };
 }
 
-const octokit = new Octokit({
-  auth: "130142cd1b8189111d726b4691d9b0fd43d9da0f",
-});
+const octokit = new Octokit();
 const commits = await octokit.rest.repos.listCommits({
   owner: "trynova",
   repo: "nova",
