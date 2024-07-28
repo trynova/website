@@ -33,9 +33,12 @@
     --accent-900: #48426d;
     --accent-950: #27233a;
 
-    --success: #2e854b;
-    --warning: #d9a620;
-    --error: #b52b2b;
+    --chart-pass: #2e854b;
+    --chart-fail: #b52b2b;
+    --chart-crash: #821d1d;
+    --chart-skip: #d9a620;
+    --chart-timeout: #d9a620;
+    --chart-unresolved: #d9a620;
 
     --selection-color: var(--neutral-950);
 
