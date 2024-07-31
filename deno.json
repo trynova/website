@@ -19,7 +19,7 @@
     "marked": "npm:marked@^13.0.2",
     "preact": "npm:preact@^10.22.0",
     "preact-render-to-string": "npm:preact-render-to-string@^6.4.2",
-    "octokit": "https://esm.sh/octokit@4.0.2?dts",
+    "octokit": "npm:octokit@4.0.2",
     "fresh_charts": "https://deno.land/x/fresh_charts@0.3.1/mod.ts",
     "utils/": "./utils/"
   },
