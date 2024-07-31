@@ -12,33 +12,52 @@ import { Layout } from "components/Layout.tsx";
 
 const classes = await css(import.meta.resolve("./test262.css"));
 
-const octokit = new Octokit();
+interface Metrics {
+  results: {
+    crash: number;
+    fail: number;
+    pass: number;
+    skip: number;
+    timeout: number;
+    unresolved: number;
+  };
+  total: number;
+}
 
+function dataset(datapoints: typeof data, result: keyof Metrics["results"]) {
+  return {
+    label: result[0].toUpperCase() + result.slice(1),
+    data: datapoints.map(({ metrics: { total, results } }) =>
+      results[result] / total * 100
+    ),
+    backgroundColor: `var(--chart-${result})`,
+    borderColor: `var(--chart-${result})`,
+    fill: "origin",
+    pointStyle: false,
+  };
+}
+
+const octokit = new Octokit();
 const commits = await octokit.rest.repos.listCommits({
   owner: "trynova",
   repo: "nova",
-  path: "tests/expectations.json",
+  path: "tests/metrics.json",
   per_page: 100,
 });
 
 const data = (await Promise.all(commits.data.map(async (commit) => {
-  const expectations = await (await fetch(
-    `https://raw.githubusercontent.com/trynova/nova/${commit.sha}/tests/expectations.json`,
-  )).json() as Record<string, "PASS" | "FAIL" | "CRASH" | "TIMEOUT">;
-  const results = Object.values(expectations);
+  const metrics = await (await fetch(
+    `https://raw.githubusercontent.com/trynova/nova/${commit.sha}/tests/metrics.json`,
+  )).json() as Metrics;
   return {
     sha: commit.sha,
     message: commit.commit.message,
     date: Temporal.Instant.from(commit.commit.author?.date),
-    expectations,
-    metrics: {
-      pass: results.filter((result) => result === "PASS").length,
-      fail: results.filter((result) => result === "FAIL").length,
-      crash: results.filter((result) => result === "CRASH").length,
-      timeout: results.filter((result) => result === "TIMEOUT").length,
-    },
+    metrics,
   };
 }))).sort(({ date: a }, { date: b }) => Temporal.Instant.compare(a, b));
+
+if (data.length === 1) data.push(data[0]);
 
 function Test262() {
   return (
@@ -55,13 +74,45 @@ function Test262() {
         type="line"
         svgClass={classes.chart}
         options={{
+          plugins: {
+            filler: {
+              propagate: false,
+            },
+            legend: {
+              labels: {
+                color: "var(--neutral-800)",
+                font: {
+                  family: "var(--font-mono)",
+                  size: 10,
+                },
+                padding: 16,
+              },
+            },
+          },
           scales: {
             x: {
+              ticks: {
+                color: "var(--neutral-800)",
+                font: {
+                  family: "var(--font-mono)",
+                  size: 10,
+                },
+              },
               grid: {
                 color: "var(--neutral-400)",
               },
             },
             y: {
+              stacked: true,
+              min: 0,
+              max: 100,
+              ticks: {
+                color: "var(--neutral-800)",
+                font: {
+                  family: "var(--font-mono)",
+                  size: 10,
+                },
+              },
               grid: {
                 color: "var(--neutral-400)",
               },
@@ -71,31 +122,12 @@ function Test262() {
         data={{
           labels: data.map(({ sha }) => sha.slice(0, 7)),
           datasets: [
-            // {
-            //   label: "Pass",
-            //   data: data.map(({ metrics }) => metrics.pass),
-            //   borderColor: "var(--success)",
-            //   pointStyle: false,
-            // },
-            {
-              label: "Fail",
-              data: data.map(({ metrics }) => metrics.fail),
-              borderColor: "var(--error)",
-              pointStyle: false,
-            },
-            {
-              label: "Crash",
-              data: data.map(({ metrics }) => metrics.crash),
-              borderColor: "var(--error)",
-              borderDash: [5, 5],
-              pointStyle: false,
-            },
-            {
-              label: "Timeout",
-              data: data.map(({ metrics }) => metrics.timeout),
-              borderColor: "var(--warning)",
-              pointStyle: false,
-            },
+            dataset(data, "pass"),
+            dataset(data, "skip"),
+            dataset(data, "timeout"),
+            dataset(data, "unresolved"),
+            dataset(data, "fail"),
+            dataset(data, "crash"),
           ],
         }}
       />
@@ -113,9 +145,4 @@ if (import.meta.main) {
     output(import.meta.url),
     html(renderToString(<Test262 />), { title: "Test262 · Nova" }),
   );
-
-  // HACK: Exit process to prevent hanging. There is a bug loose in the code
-  // preventing the process from exiting. Probably a promise that is not being
-  // awaited or octokit which needs to be closed somehow.
-  Deno.exit();
 }
