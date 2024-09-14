@@ -1,5 +1,5 @@
 ---
-title: Sugar, spice, and everything nice... Part 1
+title: Internals of Nova Part 1 - Sugar, spice, and everything nice...
 description: Looking at the secret sauce that makes Nova.
 date: 2024-08-13
 authors:
