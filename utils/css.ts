@@ -1,8 +1,6 @@
-import init, { transform } from "lightningcss";
+import { transform } from "lightningcss";
 
 import { fromFileUrl } from "@std/path";
-
-await init();
 
 /**
  * A map of CSS modules to their class names and transformed code.
@@ -24,7 +22,7 @@ export async function css(path: string) {
   const result = transform({
     filename: path,
     cssModules: true,
-    code: await Deno.readFile(path),
+    code: await Deno.readFileSync(path),
     minify: true,
   });
   const code = new TextDecoder().decode(result.code);

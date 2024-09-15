@@ -20,16 +20,28 @@ if (import.meta.main) {
   const entries = separator === -1 ? Deno.args : Deno.args.slice(separator + 1);
 
   (await Promise.all(
-    entries.map((entry) =>
-      new Deno.Command("deno", {
-        args: [...args, entry],
-        stdout: "inherit",
-        stderr: "inherit",
-      }).output()
-    ),
-  )).map((output) => {
-    if (!output.success) {
-      Deno.exit(output.code);
-    }
-  });
+    entries.map(async (entry) => {
+      const command = `deno ${args.join(" ")} ${entry}`;
+      const start = performance.now();
+      let output;
+      try {
+        output = await new Deno.Command("deno", {
+          args: [...args, entry],
+          stdout: "inherit",
+          stderr: "inherit",
+        }).output();
+      } catch (error) {
+        console.error(`Failed to run "${command}"`);
+        console.error(error);
+        Deno.exit(1);
+      }
+
+      if (!output.success) {
+        console.error(`Process "${command}" exited with ${output.code}`);
+        Deno.exit(output.code);
+      }
+
+      console.info(`Successfully ran "${command}" in ${(performance.now() - start).toFixed(0)}ms`);
+    })
+  ));
 }
