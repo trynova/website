@@ -19,7 +19,7 @@ if (import.meta.main) {
   const args = separator === -1 ? [] : Deno.args.slice(0, separator);
   const entries = separator === -1 ? Deno.args : Deno.args.slice(separator + 1);
 
-  (await Promise.all(
+  await Promise.all(
     entries.map(async (entry) => {
       const command = `deno ${args.join(" ")} ${entry}`;
       const start = performance.now();
@@ -41,7 +41,11 @@ if (import.meta.main) {
         Deno.exit(output.code);
       }
 
-      console.info(`Successfully ran "${command}" in ${(performance.now() - start).toFixed(0)}ms`);
-    })
-  ));
+      console.info(
+        `Successfully ran "${command}" in ${
+          (performance.now() - start).toFixed(0)
+        }ms`,
+      );
+    }),
+  );
 }
