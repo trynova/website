@@ -62,7 +62,7 @@ struct ArrayHeapData {
 }
 ```
 
-When we reduce through `arr`, we must first access the `elemeents`. In this case it gives us roughly something like:
+When we reduce through `arr`, we must first access the `elements`. In this case it gives us roughly something like:
 
 ```rs
 struct FixedArray<const N: usize> {
