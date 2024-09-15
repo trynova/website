@@ -8,19 +8,19 @@
     "clean": "rm -rf build"
   },
   "imports": {
-    "@std/front-matter": "jsr:@std/front-matter@^0.224.3",
-    "@std/fs": "jsr:@std/fs@^0.224.0",
-    "@std/http": "jsr:@std/http@^0.224.0",
-    "@std/path": "jsr:@std/path@^0.224.0",
+    "@std/front-matter": "jsr:@std/front-matter@^1",
+    "@std/fs": "jsr:@std/fs@^1",
+    "@std/http": "jsr:@std/http@^1",
+    "@std/path": "jsr:@std/path@^1",
     "clsx": "npm:clsx@^2.1.1",
     "components/": "./components/",
     "feed": "npm:feed@^4.2.2",
-    "lightningcss": "https://esm.sh/lightningcss-wasm@1.25.1",
-    "marked": "npm:marked@^13.0.2",
-    "preact": "npm:preact@^10.22.0",
-    "preact-render-to-string": "npm:preact-render-to-string@^6.4.2",
-    "octokit": "npm:octokit@4.0.2",
     "fresh_charts": "https://deno.land/x/fresh_charts@0.3.1/mod.ts",
+    "lightningcss": "npm:lightningcss@^1.27.0",
+    "marked": "npm:marked@^14.1.2",
+    "octokit": "npm:octokit@4.0.2",
+    "preact": "npm:preact@^10.24.0",
+    "preact-render-to-string": "npm:preact-render-to-string@^6.5.11",
     "utils/": "./utils/"
   },
   "compilerOptions": {
