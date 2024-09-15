@@ -22,7 +22,7 @@ export async function css(path: string) {
   const result = transform({
     filename: path,
     cssModules: true,
-    code: await Deno.readFileSync(path),
+    code: await Deno.readFile(path),
     minify: true,
   });
   const code = new TextDecoder().decode(result.code);
