@@ -9,7 +9,7 @@ authors:
 
 [Last time](./internals-of-nova-part-1.md) I talked about how non-ordinary objects in Nova delegate their object features to a "backing object". This allows "exotic objects" to focus on the features that they are meant for and not get bogged down in the details that is JavaScript objects. This saves us some memory on every exotic object, but there is nothing particularly amazing about this trick. Any old engine could do the same thing and reap the same benefits.
 
-This time I will delve into the foremost idea behind Nova's heap structure; this idea is also what has driven me to dedicate my time to Nova. The name of this idea is the "heap vector", an idea inspired by the [entity component system](https://en.wikipedia.org/wiki/Entity_component_system) and [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) in general.
+This time I will delve into the foremost idea behind Nova's heap structure; this idea is also what has driven me to dedicate my time to Nova. The name of this idea is the "heap vector", an idea inspired by the [entity component system](https://en.wikipedia.org/wiki/Entity_component_system) architecture and [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) in general.
 
 I will also skip to the punchline first and come back for the reasons later. So buckle in and prepare yourself, this might sting a little before it gets better. I promise you, it will feel good in the end.
 
@@ -43,6 +43,7 @@ struct ArrayHeapVector {
     ptr: *mut ArrayHeapData<cap>,
     // Note: Use u32's as we index using u32; usize would be unnecessarily large.
     len: u32,
+    // Number of ArrayHeapData that were allocated behind ptr, ie. the size of the ptr allocation.
     cap: u32,
     backing_objects: HashMap<Array, OrdinaryObject>,
 }
@@ -85,7 +86,7 @@ struct ObjectHeapData<const N: usize> {
     properties: [PropertiesIndex; N],
     /// number of properties currently used
     lens: [u32; N],
-    /// 
+    /// u8 identifier of properties capacity, and extensibility of the object
     caps: [PropertiesCapacityExtensibility; N],
 }
 struct ObjectVec {
