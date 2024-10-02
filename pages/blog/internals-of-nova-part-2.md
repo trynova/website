@@ -10,10 +10,9 @@ authors:
 [Last time](./internals-of-nova-part-1.md) I talked about how non-ordinary
 objects in Nova delegate their object features to a "backing object". This
 allows JavaScript's "exotic objects" to focus on the features that they are
-meant for and not get bogged down in the details that is JavaScript objects.
-This saves us some memory on every exotic object, but there is nothing
-particularly amazing about this trick. Any old engine could do the same thing
-and reap the same benefits.
+meant for and not get bogged down in the details. This saves us some memory on
+every exotic object, but there is nothing particularly amazing about this trick.
+Any old engine could do the same thing and reap the same benefits.
 
 This time I will delve into the foremost idea behind Nova's heap structure, and
 the thing that really sets Nova apart from a traditional engine design. This
@@ -24,33 +23,31 @@ architecture and
 [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) in
 general.
 
-Let's skip right to the punchline! We'll go take a look at the aspirational heap
+Let's skip right to the punchline! We'll take a look at the aspirational heap
 structure of Nova, then come back for the reasons later. So buckle in and
 prepare yourself, this might sting a little before it gets better. I promise
 you, it will feel good in the end.
 
 ## Storing things in vectors, the old fashioned way!
 
-Nova's heap is built around vectors. We do not have any fancy half-space copying
-garbage collector, no interesting nursery heap split apart from the old space
-heap, no object header explaining what a particular heap item is, no tombstones
-for relocations... We only have a bunch of vectors that are managed quite
-plainly and simply. Each kind of heap data, be it a Symbol, String, Number,
-ordinary Object, Array, Map, Set, ... has its data saved in its own "heap
-vector". A JavaScript Value in Nova is then a type tag which tells which heap
-vector to access, and an index into the vector. Everything else flows from
-there.
+Nova's heap is built around homogenous vectors of data. We do not have any fancy
+half-space copying garbage collector, no interesting nursery heap split apart
+from the old space heap, no heap object headers, no tombstones for
+relocations... We only have a bunch of vectors that are managed quite plainly
+and simply. Each kind of heap item, be it a Symbol, String, Number, ordinary
+Object, Array, Map, Set, ... has its data saved in its own "heap vector". A
+JavaScript Value in Nova is then a type tag which tells which heap vector to
+access, and an index into the vector. Everything else flows from there.
 
-So what do should these heap vectors hold? Let us go for a stroll.
+So what should these heap vectors hold? Let us go for a stroll.
 
 ### Array heap data
 
 First we look at my favourite exotic object in all of JavaScript: The humble
-Array. The way I want to eventually store the data for all Arrays alive in the
-heap is this:
+Array. The way I want to eventually store the data for all Arrays is this:
 
 ```rs
-/// One-based index into ArrayVec
+/// One-based index into ArrayHeapVector
 ///
 /// Note: NonZeroU32 is used to make Option<Array> the same size as Array.
 struct Array(NonZeroU32);
