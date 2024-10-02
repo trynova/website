@@ -9,261 +9,104 @@ authors:
 
 [Last time](./internals-of-nova-part-1.md) I talked about how non-ordinary
 objects in Nova delegate their object features to a "backing object". This
-allows "exotic objects" to focus on the features that they are meant for and not
-get bogged down in the details that is JavaScript objects. This saves us some
-memory on every exotic object, but there is nothing particularly amazing about
-this trick. Any old engine could do the same thing and reap the same benefits.
+allows JavaScript's "exotic objects" to focus on the features that they are
+meant for and not get bogged down in the details that is JavaScript objects.
+This saves us some memory on every exotic object, but there is nothing
+particularly amazing about this trick. Any old engine could do the same thing
+and reap the same benefits.
 
-This time I will delve into the foremost idea behind Nova's heap structure; this
-idea is also what has driven me to dedicate my time to Nova. The name of this
-idea is the "heap vector" but more generally what I am talking about is
+This time I will delve into the foremost idea behind Nova's heap structure, and
+the thing that really sets Nova apart from a traditional engine design. This
+idea is also what has driven me to dedicate my time to Nova. That idea is the
+"heap vector", an idea inspired by the
 [entity component system](https://en.wikipedia.org/wiki/Entity_component_system)
-and [data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design).
+architecture and
+[data-oriented design](https://en.wikipedia.org/wiki/Data-oriented_design) in
+general.
 
-## Data-oriented design
+Let's skip right to the punchline! We'll go take a look at the aspirational heap
+structure of Nova, then come back for the reasons later. So buckle in and
+prepare yourself, this might sting a little before it gets better. I promise
+you, it will feel good in the end.
 
-Data-oriented design is a software design pattern or philosophy originating from
-the games industry, although one could perhaps argue that data-oriented design
-is the original design philosophy of software in general. In an abstract sense,
-a program is nothing more than input data and transformations that act upon said
-input data. A program's function is then to perform those transformations and do
-it as efficiently as possible (with some constraints, eg. developer time) to
-produce correct output from the input data.
+## Storing things in vectors, the old fashioned way!
 
-When we write a program, it is then fairly obvious that we cannot design the
-correct transformations without knowing what our input and output is, and more
-importantly we cannot design the transformations to be efficient without knowing
-our input data. As the input changes, the transformations must change and thus
-our program must change.
+Nova's heap is built around vectors. We do not have any fancy half-space copying
+garbage collector, no interesting nursery heap split apart from the old space
+heap, no object header explaining what a particular heap item is, no tombstones
+for relocations... We only have a bunch of vectors that are managed quite
+plainly and simply. Each kind of heap data, be it a Symbol, String, Number,
+ordinary Object, Array, Map, Set, ... has its data saved in its own "heap
+vector". A JavaScript Value in Nova is then a type tag which tells which heap
+vector to access, and an index into the vector. Everything else flows from
+there.
 
-Data-oriented design's first tenet is thus that we must know our data. If we do
-not know our data, we do not know the transformations we need to produce correct
-output, and that transformation is eventually the program that we must write. If
-we do not know our data, we do not know our problem. As developers, our job is
-not to write software; our job is to write programs that solve the problem at
-hand. If we do not know our data, we cannot do our job.
+So what do should these heap vectors hold? Let us go for a stroll.
 
-Our data is also not only the actual input data that your program eventually
-receives. It also encompasses the computer that the program runs on: To write
-efficient transformations, we must take into account the context of our
-program's runtime. And in this sense, the most important thing in computers for
-the past 30 years has been **The Cache**!
+### Array heap data
 
-Processors have got massively faster over the last 30 years, and in the last 10
-years they have gotten massively more parallel with both
-[simultaneous multithreading](https://en.wikipedia.org/wiki/Simultaneous_multithreading),
-[symmetric multiprocessing](https://en.wikipedia.org/wiki/Symmetric_multiprocessing),
-and
-[SIMD instructions](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data).
-At the same time, memory speeds have grown only modestly in comparison. The
-result is that a single processor can often process information faster than can
-be loaded from main memory. Programs often then end up bounded by the memory
-latency, not by memory bandwidth and most especially not by CPU speeds.
-
-To sidestep this issue, local memory caches have been added to the processors.
-These caches are both closer to the CPU, reducing access latency from distance,
-and more importantly use a
-[faster, volatile memory technology](https://en.wikipedia.org/wiki/Static_random-access_memory)
-than main memory. Fetching data from the main memory to the local caches is
-slow, but once the data is there then re-fetching it is massively faster. A
-program will often reuse the same memory multiple times over, and that memory
-will then be accessed from caches, avoiding the need to load the data from main
-memory.
-
-To give concrete numbers, a main memory load takes approximately 200
-nanoseconds. A local cache access takes between 1 and 40 nanoseconds, depending
-on the cache level. That is up to two orders of magnitude better! And the effect
-is generally additive: Loading data that is then used to load more data pays the
-memory latency twice. Often a program will also have very deep memory load
-trees, and at worst every branch in the tree pays the 200 nanosecond price: This
-is what crashes and burns program performance in this day and age. It is not a
-slow CPU bringing you low, nor a slow hard drive or a lack of memory. It is
-often not an undersized GPU that grinds a game's performance to a halt: It is
-memory loading, or "memory stalls", that ruins your day.
-
-Data-oriented design is all about solving or at least mitigating this issue. To
-do so, we must know our data and use that knowledge to minimize memory usage
-which always improves cache usage, and we must take into account the CPU caches
-when desigining our software. The important thing here is that a CPU loads data
-into cache not byte-by-byte but in cache lines. This is usually 64 bytes at a
-time, though recent CPUs have bumped this number up to 128 bytes.
+First we look at my favourite exotic object in all of JavaScript: The humble
+Array. The way I want to eventually store the data for all Arrays alive in the
+heap is this:
 
 ```rs
-#[repr(align(64))]
-struct CacheLine([u8; 64]);
-```
+/// One-based index into ArrayVec
+///
+/// Note: NonZeroU32 is used to make Option<Array> the same size as Array.
+struct Array(NonZeroU32);
 
-When we load a piece of data we load a full cache line into the CPU, no matter
-how small a part of it we actually want to use. Loading this one cache line from
-main memory takes 200 nanoseconds. Now, if we only use a single byte (or worse,
-one bit!) of that data then the vast majority of the data loaded is wasted. What
-we want is to ensure that as much of the cache line gets used, especially if we
-are in a tight loop.
-
-Let's take as an example an Array of Arrays in the V8 JavaScript engine.
-
-```ts
-const arr: Data[][] = await Promise.all(names.map(fetchDataForName));
-```
-
-Now say we are interested in how many `Data` entities there are in total: We
-will loop over the `arr` Array, accessing each Array in it, and tallying up the
-length:
-
-```ts
-const dataCount = arr.reduce((acc, dataArray) => acc + dataArray.length, 0);
-```
-
-In terms of memory access patterns, a V8 Array looks roughly like this:
-
-```rs
-struct Array(*mut ArrayHeapData);
-
-// Size is 32 bytes in Node, 16 bytes in Chrome with pointer compression
-struct ArrayHeapData {
-    map: *mut Map,
-    elements: *mut FixedArray,
-    length: u32,
-    properties: *mut FixedArray,
-}
-```
-
-When we reduce through `arr`, we must first access the `elements`. In this case
-it gives us roughly something like:
-
-```rs
-struct FixedArray<const N: usize> {
-    length: usize,
-    entries: [*mut ArrayHeapData; N],
-}
-```
-
-From here we can chase each `*mut ArrayHeapData` to get to the `length` data
-contained in each, which we then load and sum up.
-
-It is fair to assume that most of these `ArrayHeapData` structs are located
-close to each other: We shall assume that they are actually right next to one
-another which means that we can fit two of them on one cache line (four in
-Chrome). What we want out of each `ArrayHeapData` is a single `u32`, that is 4
-bytes. This means that we use 8 bytes (16 in Chrome) of every 64-byte cache
-line. That is a usage rate of 12.5%. In expert circles this is called "bad".
-
-Because we assumed that all the `ArrayHeapData` are right next to each other,
-the CPU will actually aggressively prefetch data for us during this reduce
-action and we might find that we only pay the memory latency a few times, and
-after that we are bound by the memory bandwidth. Hearing this, you might think
-that we it is actually fine that the cache usage rate is so low: The CPU
-prefetching handled any possible problems we might have otherwise had.
-
-This is not so: Cache size is limited, and every cache line loaded is a cache
-line evicted from memory. The more we fetch, the more we need to fetch later to
-get back data that we lost but still needed. In a real world situation the
-`ArrayHeapData` structs are unlikely to be right next to one another: Fetch
-responses come back in unreliable order, and they themselves are objects that
-get allocated onto the same heap as the `ArrayHeapData` do. We likely find that
-the `ArrayHeapData` are each on their own cache line which further worsens our
-already bad cache line usage rate, which again means that we load and evict more
-cache lines.
-
-"Well," you say, "there is nothing we can do about this. The Array must keep its
-data together, there is no efficient way to store any of it out of band!" And
-you'd be right if we assume that an Array's data is of equal importance, and
-that the Array must be accessed by a pointer. Last time I explored what we stand
-to gain if we let go of the assumption that all data is of equal importance.
-This time I will explore what we stand to gain if we let go of the assumption
-that an Array must be accessed by a pointer.
-
-## Indexed data access
-
-I will finally cut to the point: We shall access our Array not by pointer, but
-by index (this is actually what V8 does for all heap elements in Chrome as well,
-only it is a 4-byte index shared by all heap elements, counted from the heap
-origin). In our heap we will have a "heap vector" of `ArrayHeapData`s, and each
-Array owns one index in this vector:
-
-```rs
-struct Array(u32);
-
-struct Heap {
-    // ...
-    arrays: Vec<ArrayHeapData>,
-    // ...
-}
-```
-
-This gives us a much better chance that our `ArrayHeapData` is located right
-next to each other in memory: A fetch response object is not an Array, it won't
-allocate in this heap vector and thus won't push our arrays "apart". But we're
-still left with that abysmal 12.5% cache line usage. That is not an acceptable
-number! What we want is to read _only_ the lengths and nothing more! Why cannot
-we do that?
-
-Well with a pointer we couldn't, but with an index we can: As long as multiple
-vectors share the same indexing then we can use a single index to look into any
-one of them. The naive approach is this:
-
-```rs
-struct Heap {
-    // ...
-    array_maps: Vec<*mut Map>,
-    array_elements: Vec<*mut FixedArray>,
-    array_lengths: Vec<u32>,
-    array_properties: Vec<*mut FixedArray>,
-    // ...
-}
-```
-
-We manually make sure that these vectors stay equally long and that we do not
-shuffle their contents (at least not without doing the same shuffle in each of
-them). But this seems pretty bad, we now have 4 vectors that should just be a
-single thing. We can improve on this with something like this:
-
-```rs
+#[repr(C)]
 struct ArrayHeapData<const N: usize> {
-    maps: [*mut Map; N],
-    elements: [*mut FixedArray; N],
-    lengths: [u32; N],
-    properties: [*mut FixedArray; N],
+    /// a u32 index into Vec<ElementsHeapData<cap>>
+    elements: [ElementIndex; N],
+    /// length of the Array
+    lens: [u32; N],
+    /// u8 identifier of elements capacity, and writability of length
+    caps: [ElementCapacityWritability; N],
 }
-struct ArrayVec {
-    // Note: Invalid Rust, 'cap' cannot be referred to as const generic. This is only to show the idea.
+
+struct ArrayHeapVector {
+    // Note: Invalid Rust, 'cap' cannot be referred to as const generic. This
+    // is only to show the idea.
     ptr: *mut ArrayHeapData<cap>,
     // Note: Use u32's as we index using u32; usize would be unnecessarily large.
     len: u32,
+    /// Number of ArrayHeapData that were allocated behind ptr, ie. the size of
+    /// the ptr allocation.
     cap: u32,
+    backing_objects: HashMap<Array, OrdinaryObject>,
 }
 ```
 
-With this we only have a single "vector" split into four homogenous slices. Now
-when we load the length of an Array, we access the `lengths` slice at the index
-of that Array. This loads a cache line which contains other `u32` length values
-of arrays before and/or after our Array. Now, during our reduce when we load the
-next Array's length it is likely going to be the Array next index over, or at
-least a very close-by index, meaning that very likely the next length is already
-available in the cache line we just loaded.
+Our Array "heap vector" is a pointer to three sequential arrays of data of
+`ElementIndex` (a `u32`), `u32`, and `ElementCapacityWritability` (a `u8`). (For
+the #dark-arts folks out there: These should actually be `MaybeUninit<T>` for
+each slice. I'm saving keystrokes.) A single Array owns one index from each
+slice, meaning that effectively an Array's static data is made up of
+`(ElementIndex, u32, ElementCapacityWritability)`, which is 9 bytes in total (we
+get to ignore padding because of the homogenous slices). This is effectively an
+in-memory database of three data columns, where each Array owns one row in the
+database.
 
-A single cache line fits 16 Array lengths and in the best case scenario it all
-the Array lengths we reduce over are contained in the single cache line we load.
-Even as the number of Arrays grows, our cache line usage may end up being
-effectively 100%: If no other Arrays are being allocated during the fetching,
-then all of the Array lengths we are accessing will be right next to one
-another. Reducing over the lengths now becomes a fully CPU bound problem (and
-JavaScript's operational semantics are really good at making seemingly simple
-things so complex that the CPU will have its hands full).
+Additionally, I want to keep a `backing_objects` HashMap on the side. The
+purpose for this is to act as something of a scratch memory for those Arrays
+that make use of their object properties. That is, Arrays that have named
+properties set on them or that have prototypes that differ from
+`Array.prototype`. The absolute majority of Arrays do not have these and thus we
+avoid the need to allocate any memory for them in this way. This does assume
+that we can know the proper Realm in which the Array was created in, but if we
+have a separate Heap for each Realm then this is trivially knowable. Firefox's
+SpiderMonkey has precisely this sort of setup, so we can probably follow their
+lead on this without much issue.
 
-## Taking the next step
-
-Nova's heap is made up of "heap vectors" like shown above. Specifically, the
-current status is that we use a plain old `Vec<ArrayHeapData>` instead of
-actually splitting the `ArrayHeapData` into multiple homogenous slices. Instead
-of the `Map` and `FixedArray` pointers like in V8, Nova's `ArrayHeapData` looks
-roughly like this:
+This is unfortunately not reality yet. Currently Nova's Array heap vector looks
+like this:
 
 ```rs
 struct ArrayHeapData {
-    /// u32 index to Vec<ObjectHeapData> or 0 as None
+    /// NonZeroU32, 1-based index to Vec<ObjectHeapData> or 0 for None
     backing_object: Option<OrdinaryObject>,
-    /// u32 index to Vec<ElementsHeapData<cap>>
+    /// NonZeroU32, 1-based index to Vec<ElementsHeapData<cap>>
     elements: ElementIndex,
     /// u8 identifier of elements array capacity (powers of two)
     cap: ElementCapacity,
@@ -272,81 +115,39 @@ struct ArrayHeapData {
     /// writable flag of this Array's length property
     len_writable: bool,
 }
+
+type ArrayHeapVector = Vec<ArrayHeapData>;
 ```
 
-This is 16 bytes in total. Split into 5 homogenous slices this could be brought
-down to 14 bytes through the removal of two padding bytes. Combining
-`len_writable` into `cap` gets us to 13 bytes. But can we go lower? And should
-we?
+Each Array again owns one index in the `ArrayHeapVector` but the Array's data is
+all held together. This is somewhat simpler to reason about and much easier
+write out in code than the slice-based one up above. That being said, this is
+also very likely to have worse performance: This struct's size is larger because
+of padding bytes, the backing object index held within, and loading one of these
+data points loads all the others regardless of if they're necessary or not.
 
-In the last installment I mentioned that the backing object needs to perform
-double-duty as a `Realm` indicator for when the backing object hasn't been
-created yet. If the Array knows what `Realm` created it by association, then we
-can drop that need. This association would be a `Realm`-specific `Heap`.
+### Object heap data
 
-If each `Realm` has its own `Heap` struct, then we do not need the backing
-object's memory unless a backing object has specifically been created. This
-means that the `backing_object` `Option` is most often `None`. Now, what is an
-efficient data structure that can associate an index with a another index? Yes
-indeed, a hashmap! In the future if Nova splits the singular `Heap` up into
-multiple ones then we can move to the following kind of heap structure:
+In the same vein, what I want our Objects to look like is this:
 
 ```rs
-struct ArrayHeapData<const N: usize> {
-    elements: [ElementIndex; N],
-    lens: [u32; N],
-    caps: [ElementCapacityWritability; N],
-}
-struct ArrayVec {
-    // Note: Invalid Rust, 'cap' cannot be referred to as const generic. This is only to show the idea.
-    ptr: *mut ArrayHeapData<cap>,
-    // Note: Use u32's as we index using u32; usize would be unnecessarily large.
-    len: u32,
-    cap: u32,
-    backing_objects: HashMap<Array, OrdinaryObject>,
-}
-```
+/// One-based index into ObjectVec
+///
+/// Note: NonZeroU32 is used to make Option<OrdinaryObject> the same size as
+/// OrdinaryObject.
+struct OrdinaryObject(NonZeroU32);
 
-Now the common case for a JavaScript Array needs only 9 bytes of memory.
-Iterating over multiple Arrays to access one "part" of them only accesses those
-parts and none of the others. Cache line utilisation heretofore unimaginable in
-a JavaScript engine is attainable as easily as just writing the code. This ...
-this could change things.
-
-## Post scriptum: What about Objects?
-
-Let's take a quick detour to Objects as well. First thing is that we drop out
-the "elements" store from ordinary objects. Objects usually have named
-properties, only rarely do they have indexed properties. If what you want is
-indexed properties, then an Array is what you should use.
-
-A `Map` like in V8 is still very much necessary, though we will call it a
-`Shape`: Without shapes, a JavaScript engine cannot optimise prototype accesses
-and that then means that calling prototype methods becomes _very_ expensive
-indeed. That is then basically all we need, and here is what we're left with:
-
-```rs
-struct ObjectHeapData {
-    /// u32 Shape index
-    shape: Shape,
-    /// u32 Properties index
-    properties: PropertiesIndex,
-    /// u8 capacity identifier, plus extensibilty of the object
-    cap: PropertiesCapacityExtensibility,
-    /// u32 count of properties in object
-    len: u32,
-}
-```
-
-Performing the same splitting as with `ArrayHeapData` above get:
-
-```rs
 struct ObjectHeapData<const N: usize> {
+    /// a u32 index to Vec<Shape>
     shapes: [Shape; N],
+    /// a u32 index to Vec<PropertiesHeapData<cap>>
     properties: [PropertiesIndex; N],
+    /// number of properties currently used
     lens: [u32; N],
+    /// u8 identifier of properties capacity, and extensibility of the object
     caps: [PropertiesCapacityExtensibility; N],
 }
+
 struct ObjectVec {
     ptr: *mut ObjectHeapData<cap>,
     len: u32,
@@ -354,141 +155,152 @@ struct ObjectVec {
 }
 ```
 
-As a result, a single Object takes 13 bytes. At present, Nova does not have
-`Shape`s and instead we have a `keys: KeysIndex` and a
-`prototype: Option<Object>`, so this is more aspirational than reality.
+Each Object owns one index of the `ObjectHeapData` slices, so each Object has a
+`Shape` (a `u32`), a `PropertiesIndex` (a `u32`), a `u32` length, and
+`PropertiesCapacityExtensibility` (a `u8`). That makes a total of 13 bytes. The
+`Shape` value is an index to a heap vector of Shapes, also known as
+[hidden classes or Maps](https://v8.dev/docs/hidden-classes). These are data
+structures that describe the shape of an object, ie. its prototype and keys.
+They help reduce memory usage of objects by deduplicating the repetitive parts,
+and they make caching of prototype property access (such as class method
+accessing) possible. Nova does not currently have Shapes, but they are an
+absolute necessity for any JavaScript engine that hopes to have good performance
+under real-world workloads. We could even bring down the size of an individual
+object to only 8 bytes if both the length and `PropertyCapacityExtensibility`
+were handled by the `Shape`, but this would require creating somewhat more
+`Shape` variants.
 
-### Does it actually make sense to split everything apart?
+And as with Arrays, Nova's Objects are currently not yet split into slices like
+this. It is also not guaranteed that it makes sense to split all of the fields
+apart like this: It all depends on the memory access patterns of the program,
+which in a JavaScript engine's case depends on the JavaScript code being run.
+Still, I want to build the engine in this way.
 
-No, not necessarily. To access one object's any one property, we need to access
-the `properties` index, `cap` identifier (this identifies the right properties
-heap vector to index into), and the `len` value to check the bounds of the
-properties array that we access into. When we read a single object's single
-property this splitting means that we read four cache lines to access a single
-JavaScript Value, which in Nova is 8 bytes in size. That is a cache line
-utilisation rate of 3%.
+## Rows for the Row God, Columns for the Column Throne!
 
-This is absolutely terrible, but on the other hand 3 of the 4 cache lines can be
-loaded in parallel (they have no data dependency on each other) and most
-importantly this is a one-off case that we are looking at. A singular case's
-performance is meaningless, only when the singular case is considered in the
-context of either doing the same thing over and over again on the same data, or
-over and over again on multiple data does the performance have any meaning.
+So that was Arrays and Objects. These are the most common objects, so it makes
+sense to put some effort into these. But surely I won't ask for the same work to
+be put into every kind of object? Surely I don't want to create a separate
+in-memory database table for each kind of object?
 
-The absolute worst case scenario for the above (inspirational) Object heap
-vector is mapping over multiple objects that are so far away from each other
-that their data never appears on the same cache line. For the `u32` sized parts
-(shapes, properties, lengths) that would be 16 indexes or more apart, and for
-the `caps` part that would be 64 indexes or more apart. We can imagine such a
-mapping scenario to happen with the following kind of structure:
+Yes! That is exactly what I want! As long as performance measurements show
+improved or roughly equal performance, rows and columns is what I want to do.
+The more the merrier!
+
+"But why?", you ask. Well, let me tell you: The reason is cache efficiency and
+memory savings. Every pointer we replace with an index saves us 4 bytes. Every
+pointer that we entirely eliminate from the common case saves us 8 bytes. In
+Node.js, an Array is 32 bytes and the smallest possible Object is 24 bytes. In
+Chromium where V8's
+[pointer compression](https://v8.dev/blog/pointer-compression) is used, this
+halves to become 16 bytes for an Array and 12 bytes for an Object. Compare those
+numbers to 9 and 13 bytes for Nova: We lose by one byte on Objects when pointer
+compression is turned on (unless we move more data to the `Shape` as mentioned),
+but on Arrays we cut the memory usage nearly in half! That is nothing to sneeze
+at!
+
+Saving parts of the heap data in separate slices also means that iterating over
+large quantities of Arrays or Objects to access parts of them loads into the CPU
+cahce only those parts that are truly needed. The parts that are not needed do
+not get loaded "on the side", and do not pollute the CPU cache. Instead what
+gets loaded is other equivalent parts of "nearby" objects of the same type;
+these are the most likely thing you'll be accessing next during your iteration
+and hence loading them in is a blessing, not a curse.
+
+As an example, imagine iterating over an Array of Arrays to calculate the
+combined length. Perhaps you're interested in the sum total of items with the
+intention of pre-allocating a single Array or TypedArray to store results into
+directly. Your code might look like this:
 
 ```ts
-interface Data {
-  x: number;
-}
-
-interface Collection {
-  a: Data;
-  b: Data;
-  c: Data;
-  d: Data;
-  e: Data;
-  f: Data;
-  g: Data;
-  h: Data;
-  i: Data;
-  j: Data;
-  k: Data;
-  l: Data;
-  m: Data;
-  n: Data;
-  o: Data;
-  p: Data;
-}
-
-const arr: Collection[] = [
-  { // Object index 16
-    "a": { "x": 0 }, // Object index  0
-    "b": { "x": 0 }, // Object index  1
-    "c": { "x": 0 }, // Object index  2
-    "d": { "x": 0 }, // Object index  3
-    "e": { "x": 0 }, // Object index  4
-    "f": { "x": 0 }, // Object index  5
-    "g": { "x": 0 }, // Object index  6
-    "h": { "x": 0 }, // Object index  7
-    "i": { "x": 0 }, // Object index  8
-    "j": { "x": 0 }, // Object index  9
-    "k": { "x": 0 }, // Object index 10
-    "l": { "x": 0 }, // Object index 11
-    "m": { "x": 0 }, // Object index 12
-    "n": { "x": 0 }, // Object index 13
-    "o": { "x": 0 }, // Object index 14
-    "p": { "x": 0 }, // Object index 15
-  },
-  // continues ...
-];
+const result = arrays.reduce((acc, arr) => acc + arr.length, 0);
 ```
 
-Now mapping over eg. properties of all of the `a` objects would indeed be 16
-indexes or more apart from one another, and this sort of reduce algorithm would
-give us our worst case scenario:
+In Chromium we can count that each entry in `arrays` takes 4 bytes. Then,
+loading the `arr.length` loads each Array's data into memory which takes 16
+bytes out of a 64 byte cache line. We can assume that all the Arrays that
+`arrays` points to are located right after the other in memory and are correctly
+ordered, so the cache line contains 4 `arr.length` values. So for every 16
+Arrays in `arrays` Chromium needs to load one more cache line to get the `arr`
+reference, and for every 4 Arrays Chromium needs to load one more cache line to
+get the `arr.length` value. `N / 16 + N / 4 = 5 * N / 16` is thus the number of
+cache lines loaded. The actual data used is 4 bytes for the `arr` reference and
+4 bytes for the `length` value, for a total of `8 * N` bytes used. The rate of
+bytes loaded to bytes used is then `16 * 8 * N / 64 * 5 * N = 0.4`. That is a
+40% utilization of the loaded data. (With Node the utilization would be 25%.)
 
-```js
-arr.reduce((acc, collection) => acc + collection.a.x, 0);
-```
+For Nova each entry in `arrays` takes 8 bytes. Using the same assumptions as
+above, we see that for every 8 Arrays in `arrays` Nova has to load one cache
+line for the `arr` reference, and then for every 16 Arrays a cache line has to
+be loaded for the `arr.length` value. Every `arr` reference in this case is
+effectively a `(u8, u32)` which means that 3 bytes are padding and we won't
+count them as used. The number of cache lines loaded is then
+`N / 8 + N / 8 = N / 4`, and the data actually used is 5 bytes for the `arr`
+reference and 4 bytes for the `length` value, for a total of `9 * N` bytes used.
+The rate of bytes loaded to bytes used is then `4 * 9 * N / 64 * N = 0.5625`,
+for a 56% utilization of the loaded data. This doesn't seem like a massive
+number, but it is a 40% relative increase compared to Chromium. This is not half
+bad!
 
-For each `collection.a.x` accessed, this would first read 3 cache lines to get
-the `collection` object's `ObjectHeapData` (and one more for the `caps` data;
-this gets shared between 4 following object accesses), and then 1 cache line to
-read the `a` property from it. Then it would read 3 cache lines to get the `a`
-Object data, and 1 cache line for the `x` property. On the second round the
-`collection` data would once again be loaded from a different cache line which
-means a memory stall (its `a` object is actually on the same cache line as the
-previous `collection` item was; we can double the number of objects in the
-`collection` object and access one of the object "in the middle" to ensure that
-all accesses are never share cache lines with any previous one). This gives us
-our absolute worst case scenario, where each object property access requires 4
-cache line reads, for a total of 8 cache lines read for each `x` property
-accessed.
+## Data-oriented design
 
-How would V8 fare in this case? In V8, the `collection` objects are 152 bytes in
-size, as all of their properties are contained in-line in the object. To read
-the `a` property we need to access the `map` pointer and the `a` field, which in
-the written case is on the same cache line as `map` (if we were reading a
-proprety not at the start of the object, this would require a second cache line
-read). The `x` property is then again in-line in the `Data` object and accessing
-it requires also accessing the `map` pointer, both of which we get to do with a
-single cache line read. This then comes out to a total of just 2 cache line
-reads per `x` property accessed, which is basically what we want to see: We
-access two fields, we read two cache lines.
+We finally come to the elephant in the room. Nova titles itself as a
+"data-oriented JavaScript engine" or as "following data-oriented design
+principles", and with the above we've seen a glimpse into what I mean by that.
+But... what does that "data-oriented design" actually mean? And how is that
+connected with the stuff you just read through?
 
-From a memory latency point of view, for V8 this is 2 cache line reads and 2
-memory stalls. For Nova, this is 8 cache line reads and 4 memory stalls.
-Quadupling the number of cache line reads means we evict 4 times more cache
-lines which is of course not good, but at least we "only" doubled the number of
-memory stalls instead of quadrupling them.
+Data-oriented design as meant by
+[Mike Acton in 2014](https://www.youtube.com/watch?v=rX0ItVEVjHc) (terrific
+talk, watch it every night before bed!) is boiled down to the following points:
 
-The question is, would Nova gain anything from splitting the object data apart
-like this? One thing that definitely is gained is a reduction in memory usage
-through removal of padding: We save 3 bytes per object, roughly 20%, in padding
-space with the splitting of the `cap` property. Another thing we gain is that
-prototype access only requires accessing the `Shape` value, but this is hardly a
-thing to be proud of: I have never seen a loop over objects calling
-`Object.getPrototypeOf(item)`.
+1. As a matter of fact, the purpose of all programs and all parts of those
+   programs is to transform data from one form to another.
+2. If you don't understand the data you don't understand the problem.
+3. Conversely, you understand the problem better by understanding the data.
+4. Different problems require different solutions.
+5. If you have different data, you have a different problem.
+6. If you don't understand the cost of solving the problem, you don't understand
+   the problem.
+7. If you don't understand the hardware, you can't reason about the cost of
+   solving the problem.
 
-The only access of an object that really matters is the property access, and
-property access requires accessing the shape, properties, and capacity _at the
-very least_. Potentially, the shape of an object could indicate its properties
-length as well in which case accessing the `len` could be avoided in some
-circumstances, but that would be risky. No, it does seem that all of `cap`,
-`len`, `shape` and `properties` values are needed. There is an actual benefit to
-separating `cap` from the rest (the three padding bytes mentioned before).
-Another meaningless benefit to `Object.getPrototypeOf(item)` can be realised by
-splitting `shape` apart. So it would seem like we should split `cap` apart and
-leave `len`, `shape`, and `properties` together.
+He also gives the following rules of thumb for thinking in terms he finds
+important or useful:
 
-However, we have yet to consider garbage collection. In garbage collection it
-actually helps a lot if the fields are split apart from: The kind of transform
-that needs to be done for each depends generally on only the field itself
-(although `properties` needs `cap` for its transform selection), making
-split-apart fields a prime candidate for SIMD transforms.
+1. Where there is one, there are many. Try looking on the time axis.
+2. The more context you have, the better you can make the solution. Don't throw
+   away data you need.
+
+The idea for the heap design came from me hearing about the entity component
+system architecture, which then lead me into data-oriented design which then
+again lead me to refine the heap design. For me and for Nova this means looking
+at what JavaScript code actually does for the most of the time: The bottleneck
+of your JavaScript program is never a mathematical calculation or a single
+property access. It is always a for loop, a map over an array, perhaps a
+recursive algorithm: Each iteration repeats the same actions, most if-statements
+take the same branch each time. The things that mainly happens in these
+repeitions is reading Object properties or reading Array indexes. Every extra
+byte being loaded during these steps evicts more cache, which means that more
+cache lines need to be re-read alter, which evicts more cache.
+
+An engine's purpose is to take the current JavaScript heap state and run the
+next code step on it to create the next heap state. The less data this
+transformation needs to touch, the better it works. And most JavaScript objects
+are used in very particular ways: Arrays are usually dense and have no named
+properties, Objects usually have no indexed properties, Maps and Sets and
+ArrayBuffers and others usually have no properties at all. All of these (with
+the exception of class Objects) usually have the realm's default prototype.
+
+The backing object idea tackles the latter point; we can move object features of
+Arrays, Maps, Sets, and ArrayBuffers behind an optional backing object pointer.
+The common case then does not need to spend memory on being an Object. The heap
+vector idea tackles the former point. The smaller we can make an Array or an
+Object, and the better we can split out parts that common operations do not
+touch, the better those common operations perform.
+
+Data-oriented design does not offer any new, surprising ideas. It is simply a
+return to the roots of asking: What is it that I am actually doing? How can I do
+it as efficiently as possible with the resources that I have (in a reasonable
+manner)? It is about first principles thinking. And this is the heap structure
+that it lead me to design and explore.
