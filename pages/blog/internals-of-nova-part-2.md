@@ -47,14 +47,15 @@ First we look at my favourite exotic object in all of JavaScript: The humble
 Array. The way I want to eventually store the data for all Arrays is this:
 
 ```rs
-/// One-based index into ArrayHeapVector
+/// One-based index into ArrayHeapVec
 ///
 /// Note: NonZeroU32 is used to make Option<Array> the same size as Array.
 struct Array(NonZeroU32);
 
 #[repr(C)]
 struct ArrayHeapData<const N: usize> {
-    /// a u32 index into Vec<ElementsHeapData<cap>>
+    /// a u32 index into ElementsHeapDataVec<CAP>, where CAP is determined by
+    /// the corresponding ElementCapacityWritability datum.
     elements: [ElementIndex; N],
     /// length of the Array
     lens: [u32; N],
@@ -62,7 +63,7 @@ struct ArrayHeapData<const N: usize> {
     caps: [ElementCapacityWritability; N],
 }
 
-struct ArrayHeapVector {
+struct ArrayHeapVec {
     // Note: Invalid Rust, 'cap' cannot be referred to as const generic. This
     // is only to show the idea.
     ptr: *mut ArrayHeapData<cap>,
@@ -79,25 +80,25 @@ Our Array "heap vector" is a pointer to three sequential arrays of data of
 `ElementIndex` (a `u32`), `u32`, and `ElementCapacityWritability` (a `u8`). (For
 the #dark-arts folks out there: These should actually be `MaybeUninit<T>` for
 each slice. I'm saving keystrokes.) A single Array owns one index from each
-slice, meaning that effectively an Array's static data is made up of
-`(ElementIndex, u32, ElementCapacityWritability)`, which is 9 bytes in total (we
-get to ignore padding because of the homogenous slices). This is effectively an
-in-memory database of three data columns, where each Array owns one row in the
-database.
+slice, meaning that effectively an Array's static data is made up of a
+`(ElementIndex, u32, ElementCapacityWritability)` tuple, which is 9 bytes in
+total (we get to ignore padding because of the homogenous slices). This is
+effectively an in-memory database of three data columns, where each Array owns
+one row in the database.
 
-Additionally, I want to keep a `backing_objects` HashMap on the side. The
-purpose for this is to act as something of a scratch memory for those Arrays
-that make use of their object properties. That is, Arrays that have named
-properties set on them or that have prototypes that differ from
-`Array.prototype`. The absolute majority of Arrays do not have these and thus we
-avoid the need to allocate any memory for them in this way. This does assume
-that we can know the proper Realm in which the Array was created in, but if we
-have a separate Heap for each Realm then this is trivially knowable. Firefox's
-SpiderMonkey has precisely this sort of setup, so we can probably follow their
-lead on this without much issue.
+Additionally, the backing object references of Arrays are kept on the side in a
+`backing_objects` hash map. Arrays that have named properties set on them or
+that have prototypes that differ from `Array.prototype` have an entry in this
+map. The absolute majority of Arrays do not have these and thus we avoid the
+need to allocate any memory for them in this way. This does assume that we can
+know the proper Realm in which the Array was created in so that we can create a
+backing object with the correct Realm's `Array.prototype` intrinsic but if we
+keep a separate Heap for each Realm then this is trivially knowable. Firefox's
+SpiderMonkey has precisely this sort of Realm-specific heap setup, so we are not
+beating a new path into unknown wilds here.
 
-This is unfortunately not reality yet. Currently Nova's Array heap vector looks
-like this:
+While the above is what I want our Array heap to eventually look like, we are
+not there yet. Currently Nova's Array heap vector looks like this:
 
 ```rs
 struct ArrayHeapData {
@@ -113,15 +114,18 @@ struct ArrayHeapData {
     len_writable: bool,
 }
 
-type ArrayHeapVector = Vec<ArrayHeapData>;
+type ArrayHeapVec = Vec<ArrayHeapData>;
 ```
 
-Each Array again owns one index in the `ArrayHeapVector` but the Array's data is
-all held together. This is somewhat simpler to reason about and much easier
+Each Array again owns one index in the `ArrayHeapVec` but the Array's data is
+all held together. This is somewhat simpler to reason about and much easier to
 write out in code than the slice-based one up above. That being said, this is
 also very likely to have worse performance: This struct's size is larger because
-of padding bytes, the backing object index held within, and loading one of these
-data points loads all the others regardless of if they're necessary or not.
+of padding bytes and the backing object index held within, and loading any one
+of these data points loads all the others. This is wasted memory bandwidth in
+the common case: Reading an Array element by index does not need the Array's
+prototype meaning that it does not need the Array's backing object, nor does it
+need the capacity or `writable` flag of the `length` property.
 
 ### Object heap data
 
@@ -135,9 +139,10 @@ In the same vein, what I want our Objects to look like is this:
 struct OrdinaryObject(NonZeroU32);
 
 struct ObjectHeapData<const N: usize> {
-    /// a u32 index to Vec<Shape>
+    /// a u32 index to ShapeVec
     shapes: [Shape; N],
-    /// a u32 index to Vec<PropertiesHeapData<cap>>
+    /// a u32 index to PropertiesHeapDataVec<CAP> where CAP is determined by
+    /// the corresponding PropertiesCapacityExtensibility datum.
     properties: [PropertiesIndex; N],
     /// number of properties currently used
     lens: [u32; N],
@@ -159,19 +164,23 @@ Each Object owns one index of the `ObjectHeapData` slices, so each Object has a
 [hidden classes or Maps](https://v8.dev/docs/hidden-classes). These are data
 structures that describe the shape of an object, ie. its prototype and keys.
 They help reduce memory usage of objects by deduplicating the repetitive parts,
-and they make caching of prototype property access (such as class method
-accessing) possible. Nova does not currently have Shapes, but they are an
-absolute necessity for any JavaScript engine that hopes to have good performance
-under real-world workloads. We could even bring down the size of an individual
-object to only 8 bytes if both the length and `PropertyCapacityExtensibility`
-were handled by the `Shape`, but this would require creating somewhat more
-`Shape` variants.
+and they make caching of prototype property access (such as class method access)
+possible. Nova does not currently have Shapes, but they are an absolute
+necessity for any JavaScript engine that hopes to have good performance under
+real-world workloads.
+
+Shapes are usually fairly large data structures, as they take up responsibility
+for much of the complex and dynamic parts of JavaScript objects. Increasing
+their number without limit is generally not a good idea. We could still bring
+down the size of an individual object even more to only 8 bytes by moving both
+the properties length and `PropertyCapacityExtensibility` data points into the
+`Shape`, at the cost of needing more `Shape` variants.
 
 And as with Arrays, Nova's Objects are currently not yet split into slices like
 this. It is also not guaranteed that it makes sense to split all of the fields
 apart like this: It all depends on the memory access patterns of the program,
-which in a JavaScript engine's case depends on the JavaScript code being run.
-Still, I want to build the engine in this way.
+which in a JavaScript engine's case depends largely (but not only!) on the
+JavaScript code being run.
 
 ## Rows for the Row God, Columns for the Column Throne!
 
@@ -180,29 +189,23 @@ sense to put some effort into these. But surely I won't ask for the same work to
 be put into every kind of object? Surely I don't want to create a separate
 in-memory database table for each kind of object?
 
-Yes! That is exactly what I want! As long as performance measurements show
-improved or roughly equal performance, rows and columns is what I want to do.
-The more the merrier!
+Yes! That is exactly what I want! As long as performance measurements show that
+it makes at least some sense, rows and columns is what I want to do. The more
+the merrier! "But why?", you ask. Well, let me tell you.
 
-"But why?", you ask. Well, let me tell you: The reason is cache efficiency and
-memory savings. Every pointer we replace with an index saves us 4 bytes. Every
-pointer that we entirely eliminate from the common case saves us 8 bytes. In
-Node.js, an Array is 32 bytes and the smallest possible Object is 24 bytes. In
-Chromium where V8's
-[pointer compression](https://v8.dev/blog/pointer-compression) is used, this
-halves to become 16 bytes for an Array and 12 bytes for an Object. Compare those
-numbers to 9 and 13 bytes for Nova: We lose by one byte on Objects when pointer
-compression is turned on (unless we move more data to the `Shape` as mentioned),
-but on Arrays we cut the memory usage nearly in half! That is nothing to sneeze
-at!
+The reason is cache efficiency and memory savings. Every pointer we replace with
+an index saves us 4 bytes. Every pointer that we entirely eliminate from the
+common case saves us 8 bytes. Every necessarily unused byte we load into CPU
+cache when performing a given read or write is a byte more that the CPU
+(eventually) has to evict from cache. Every necessarily unused byte we can split
+into a separate cache line makes us load one more byte of adjacent data.
 
-Saving parts of the heap data in separate slices also means that iterating over
-large quantities of Arrays or Objects to access parts of them loads into the CPU
-cahce only those parts that are truly needed. The parts that are not needed do
-not get loaded "on the side", and do not pollute the CPU cache. Instead what
-gets loaded is other equivalent parts of "nearby" objects of the same type;
-these are the most likely thing you'll be accessing next during your iteration
-and hence loading them in is a blessing, not a curse.
+Splitting data into separate slices means that iterating over large quantities
+of heap items to access parts of them loads into the CPU cahce only those parts
+that are truly needed. The parts that are not needed do not get loaded "on the
+side", and do not pollute the CPU cache. Instead what gets loaded the same data
+of "nearby" heap items: These are the most likely thing you'll be accessing next
+during your iteration and hence loading them in is a blessing, not a curse.
 
 As an example, imagine iterating over an Array of Arrays to calculate the
 combined length. Perhaps you're interested in the sum total of items with the
@@ -213,18 +216,28 @@ directly. Your code might look like this:
 const result = arrays.reduce((acc, arr) => acc + arr.length, 0);
 ```
 
-In Chromium we can count that each entry in `arrays` takes 4 bytes. Then,
-loading the `arr.length` loads each Array's data into memory which takes 16
-bytes out of a 64 byte cache line. We can assume that all the Arrays that
-`arrays` points to are located right after the other in memory and are correctly
-ordered, so the cache line contains 4 `arr.length` values. So for every 16
-Arrays in `arrays` Chromium needs to load one more cache line to get the `arr`
-reference, and for every 4 Arrays Chromium needs to load one more cache line to
-get the `arr.length` value. `N / 16 + N / 4 = 5 * N / 16` is thus the number of
-cache lines loaded. The actual data used is 4 bytes for the `arr` reference and
-4 bytes for the `length` value, for a total of `8 * N` bytes used. The rate of
-bytes loaded to bytes used is then `16 * 8 * N / 64 * 5 * N = 0.4`. That is a
-40% utilization of the loaded data. (With Node the utilization would be 25%.)
+In Node.js, a JavaScript Value is 8 bytes, an Array is 32 bytes and the smallest
+possible Object is 24 bytes. In Chromium where V8's
+[pointer compression](https://v8.dev/blog/pointer-compression) is used, these
+numbers halve to become 4 bytes for a reference, 16 bytes for an Array and 12
+bytes for an Object. In Nova's (aspirational) case the numbers are 8, 9 and 13
+bytes for Nova: Our Value is double the size and we lose by one byte on Objects
+(unless we move more data inside the `Shape`), but nearly halve the size of
+Arrays.
+
+With this information we can count that in Chromium each entry in `arrays` takes
+4 bytes. Then, loading the `arr.length` loads each Array's data into memory
+which takes 16 bytes out of a 64 byte cache line. We can assume that all the
+Arrays that `arrays` points to are located right after the other in memory and
+are correctly ordered, so each cache line of Array data contains 4 `arr.length`
+values. So for every 16 Arrays in `arrays` Chromium needs to load one more cache
+line to get the `arr` reference, and for every 4 Arrays Chromium needs to load
+one more cache line to get the `arr.length` value. The number of cache lines
+loaded is thus `N / 16 + N / 4 = 5 * N / 16`. The actual data used by this
+reduce is 4 bytes for the `arr` reference and 4 bytes for the `length` value,
+for a total of `8 * N` bytes used. The rate of bytes loaded to bytes used is
+then `(8 * N) / (64 * (5 * N / 16)) = 0.4`. That is a 40% utilization of the
+loaded data. (With Node the utilization would be only 25%.)
 
 For Nova each entry in `arrays` takes 8 bytes. Using the same assumptions as
 above, we see that for every 8 Arrays in `arrays` Nova has to load one cache
