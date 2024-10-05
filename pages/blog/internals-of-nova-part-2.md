@@ -193,27 +193,39 @@ Yes! That is exactly what I want! As long as performance measurements show that
 it makes at least some sense, rows and columns is what I want to do. The more
 the merrier! "But why?", you ask. Well, let me tell you.
 
-The reason is cache efficiency and memory savings. Every pointer we replace with
-an index saves us 4 bytes. Every pointer that we entirely eliminate from the
-common case saves us 8 bytes. Every necessarily unused byte we load into CPU
-cache when performing a given read or write is a byte more that the CPU
-(eventually) has to evict from cache. Every necessarily unused byte we can split
-into a separate cache line makes us load one more byte of adjacent data.
+The reason is cache efficiency and memory savings. CPUs do not load memory by
+the byte, they load it by the cache line which is usually 64 bytes. Loading a
+new cache line means that a previous cache line must be evicted from cache. In
+the engine, every 8 byte pointer we replace with an 4 byte index saves us 4
+bytes. Every pointer that we entirely eliminate from the common case saves us 8
+bytes. Every byte we load into CPU cache is matched by a byte evicted and every
+byte we know is unused (properties pointer of an Array when accessing an index,
+elements pointer of an Object when accessing a named property, ...) that an
+operation ends up loading is by definition either simply wasted work of
+exchanging one old and unnecessary byte to a new and unnecessary byte in the
+cache, or may be an active loss as it exchanges one old but useful byte to a
+new, unnecessary byte. It is better to split out the commonly unused bytes onto
+separate cache lines and switch from loading known unused bytes into loading
+adjacent data of the same type.
 
-Splitting data into separate slices means that iterating over large quantities
-of heap items to access parts of them loads into the CPU cahce only those parts
-that are truly needed. The parts that are not needed do not get loaded "on the
-side", and do not pollute the CPU cache. Instead what gets loaded the same data
-of "nearby" heap items: These are the most likely thing you'll be accessing next
-during your iteration and hence loading them in is a blessing, not a curse.
+What does the adjacent data help then? For a truly singular, one-off case it
+does nothing. But a one-off read or write is an uncommon occurrence and its
+performance is meaningless as it happens only once. What you much more likely to
+be doing is repeating the same operations on multiple heap items in a row. These
+heap items have most likely come from a single source, maybe in chunks, so they
+are allocated mostly next to one another in memory. Now the adjacent data will
+contain the data we need to perform the operation on the next item. Splitting
+apart things that we know we do not need next means we are likely to need next:
+We switch from loading known unused bytes into loading myabe useful bytes. It is
+a blessing, not a curse.
 
-As an example, imagine iterating over an Array of Arrays to calculate the
-combined length. Perhaps you're interested in the sum total of items with the
-intention of pre-allocating a single Array or TypedArray to store results into
-directly. Your code might look like this:
+Let's take a concrete example: Say we are iterating over an Array of Arrays to
+calculate their combined length to pre-allocate a single Array or TypedArray to
+store future results into. Your code might look like this:
 
 ```ts
-const result = arrays.reduce((acc, arr) => acc + arr.length, 0);
+const resultCount = arrays.reduce((acc, arr) => acc + arr.length, 0);
+const resultArray = new Array(resultCount);
 ```
 
 In Node.js, a JavaScript Value is 8 bytes, an Array is 32 bytes and the smallest
@@ -221,23 +233,25 @@ possible Object is 24 bytes. In Chromium where V8's
 [pointer compression](https://v8.dev/blog/pointer-compression) is used, these
 numbers halve to become 4 bytes for a reference, 16 bytes for an Array and 12
 bytes for an Object. In Nova's (aspirational) case the numbers are 8, 9 and 13
-bytes for Nova: Our Value is double the size and we lose by one byte on Objects
-(unless we move more data inside the `Shape`), but nearly halve the size of
-Arrays.
+bytes: Our Value is double the size and we lose by one byte on Objects (unless
+we move more data inside the `Shape`), but nearly halve the size of Arrays.
+Remember that the usual cache line size (which is the smallest unit of memory
+that) is 64 bytes.
 
-With this information we can count that in Chromium each entry in `arrays` takes
-4 bytes. Then, loading the `arr.length` loads each Array's data into memory
-which takes 16 bytes out of a 64 byte cache line. We can assume that all the
-Arrays that `arrays` points to are located right after the other in memory and
-are correctly ordered, so each cache line of Array data contains 4 `arr.length`
-values. So for every 16 Arrays in `arrays` Chromium needs to load one more cache
-line to get the `arr` reference, and for every 4 Arrays Chromium needs to load
-one more cache line to get the `arr.length` value. The number of cache lines
-loaded is thus `N / 16 + N / 4 = 5 * N / 16`. The actual data used by this
-reduce is 4 bytes for the `arr` reference and 4 bytes for the `length` value,
-for a total of `8 * N` bytes used. The rate of bytes loaded to bytes used is
-then `(8 * N) / (64 * (5 * N / 16)) = 0.4`. That is a 40% utilization of the
-loaded data. (With Node the utilization would be only 25%.)
+With this information we know that in Chromium each entry in `arrays` takes 4
+bytes and loading the `arr.length` loads the Array's data into memory which
+takes 16 bytes. This means that getting the `arr.length` in total requires
+loading 20 bytes in average. Array's elements are usually allocated
+sequentially, so for every 16 Arrays in `arrays` Chromium needs to load one more
+cache line to get the `arr` reference. Assuming that all the Arrays pointed to
+by `arrays` are sequentially in memory, each cache line of Array data contains 4
+`arr.length` values, so for every 4 Arrays Chromium needs to load one more cache
+line to get the `arr.length` value. The number of cache lines loaded is thus
+`N / 16 + N / 4 = 5 * N / 16`. The actual data used by this reduce is 4 bytes
+for the `arr` reference and 4 bytes for the `length` value, for a total of
+`8 * N` bytes used. The rate of bytes loaded to bytes used is then
+`(8 * N) / (64 * (5 * N / 16)) = 0.4`. That is a 40% utilization of the loaded
+data. (With Node the utilization would be only 25%.)
 
 For Nova each entry in `arrays` takes 8 bytes. Using the same assumptions as
 above, we see that for every 8 Arrays in `arrays` Nova has to load one cache
@@ -290,27 +304,30 @@ of your JavaScript program is never a mathematical calculation or a single
 property access. It is always a for loop, a map over an array, perhaps a
 recursive algorithm: Each iteration repeats the same actions, most if-statements
 take the same branch each time. The things that mainly happens in these
-repeitions is reading Object properties or reading Array indexes. Every extra
-byte being loaded during these steps evicts more cache, which means that more
-cache lines need to be re-read alter, which evicts more cache.
+repeitions is reading and writing Object properties or Array indexes. Every
+extra byte being loaded during these steps evicts more cache, which means that
+more cache lines need to be re-read after, which evicts more cache.
 
 An engine's purpose is to take the current JavaScript heap state and run the
-next code step on it to create the next heap state. The less data this
-transformation needs to touch, the better it works. And most JavaScript objects
-are used in very particular ways: Arrays are usually dense and have no named
-properties, Objects usually have no indexed properties, Maps and Sets and
+next code step on it to transform the heap state into the next state. The less
+data this transformation needs to touch, the better it works. Most JavaScript
+objects are used in very particular ways: Arrays are usually dense and have no
+named properties, Objects usually have no indexed properties, Maps and Sets and
 ArrayBuffers and others usually have no properties at all. All of these (with
-the exception of class Objects) usually have the realm's default prototype.
+the exception of class instances) usually have the realm's default prototype.
 
 The backing object idea tackles the latter point; we can move object features of
 Arrays, Maps, Sets, and ArrayBuffers behind an optional backing object pointer.
 The common case then does not need to spend memory on being an Object. The heap
 vector idea tackles the former point. The smaller we can make an Array or an
-Object, and the better we can split out parts that common operations do not
+Object and the better we can split out parts that common operations do not
 touch, the better those common operations perform.
 
-Data-oriented design does not offer any new, surprising ideas. It is simply a
-return to the roots of asking: What is it that I am actually doing? How can I do
-it as efficiently as possible with the resources that I have (in a reasonable
-manner)? It is about first principles thinking. And this is the heap structure
-that it lead me to design and explore.
+Data-oriented design is simply a way of thinking about and designing software
+that tries to get to, or perhaps return to, the heart of what software is. It is
+about solving engineering challenges on real-world machines, with real-world
+data as your guide to the problem. Data-oriented design does not offer any new,
+surprising ideas. It is a return to the roots of asking: What is it that I am
+actually doing? How can I do it as efficiently as possible with the resources
+that I have (in a reasonable manner)? It is about first principles thinking. And
+this is the heap structure that it lead me to design and explore.
