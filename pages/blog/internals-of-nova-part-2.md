@@ -1,7 +1,7 @@
 ---
 title: Internals of Nova Part 2 - Rows for the Row God, Columns for the Column Throne!
 description: Looking at more of the secret sauce that makes Nova.
-date: 2024-09-14
+date: 2024-10-07
 authors:
   - name: Aapo Alasuutari
     url: https://github.com/aapoalas
@@ -30,7 +30,7 @@ you, it will feel good in the end.
 
 ## After a few moments, I perceived a line of data with purpose
 
-Nova's heap is built around homogenous vectors of data. We do not have any
+Nova's heap is built around homogeneous vectors of data. We do not have any
 generic heap objects, heap object headers, no tombstones for relocations, no
 interesting nursery heap split apart from the old space heap, no fancy
 half-space copying garbage collector... We only have a bunch of vectors that are
@@ -84,7 +84,7 @@ Our Array "heap vector" is a pointer to three sequential arrays of
 item in each slice (the index determined by its value), meaning that an Array's
 heap data is effectively an `(ElementIndex, u32, ElementCapacityWritability)`
 tuple, which is 9 bytes in total (we get to ignore padding because of the
-homogenous slices). You can view this as an in-memory database of three dense
+homogeneous slices). You can view this as an in-memory database of three dense
 columns.
 
 Additionally a fourth sparse column of backing object references is needed. This

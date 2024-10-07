@@ -146,7 +146,7 @@ and the code and the behaviour would be one and the same, right? From a
 specification standpoint you would be exactly correct, but: From a usage
 standpoint, the purpose of an `Array` is to act as a linear, access-by-index
 collection of values. An object's purpose is to act as something less defined,
-an acces-by-name collection of values.
+an access-by-name collection of values.
 
 Most if not perhaps all production engines out in the world make no difference
 between an object and an `Array` (except for the specification mandated handling
