@@ -177,7 +177,7 @@ JavaScript code being run.
 
 In Object's case, reading properties always requires reading both a `shapes` and
 a `properties` value so we do not gain any direct benefit by splitting the two
-values from each other. Reading the Object's shape sill benefits as it does not
+values from each other. Reading the Object's shape still benefits as it does not
 depend on the `properties` value and reading the shape is a common operation due
 to prototype property access caching, but whether that is a worthwhile benefit
 remains to be seen.
