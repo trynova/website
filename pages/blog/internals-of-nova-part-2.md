@@ -196,7 +196,7 @@ the merrier! "But why?", you ask. Well, let me tell you.
 The reason is cache efficiency and memory savings. CPUs do not load memory by
 the byte, they load it by the cache line which is usually 64 bytes. Loading a
 new cache line means that a previous cache line must be evicted from cache.
-Every 8 byte pointer we replace with an 4 byte index saves us 4 bytes. Every
+Every 8 byte pointer we replace with a 4 byte index saves us 4 bytes. Every
 pointer that we entirely eliminate from the common case saves us 8 bytes. Every
 byte we load into CPU cache is matched by a byte evicted, and every byte we know
 is unused by a particular operation is always either wasted CPU cycles spent
