@@ -44,7 +44,7 @@ So what should these heap vectors hold? Let us go take a look.
 
 ### Array heap data
 
-First, let's look how I want to eventually store the humble Array in Nova's
+First, let's look at how I want to eventually store the humble Array in Nova's
 heap:
 
 ```rs
@@ -90,8 +90,8 @@ columns.
 Additionally a fourth sparse column of backing object references is needed. This
 is the `backing_objects` hash map. Arrays with properties (aside from 'length')
 or a non-default prototype require an entry in this column. The absolute
-majority of Arrays do not have these and thus we avoid the need to allocate any
-memory for them in this way. This does assume that we can know the Array's Realm
+majority of Arrays do not have these and this way we avoid the need to allocate any
+memory for them. This does assume that we can know the Array's Realm
 so that we can create a backing object with that Realm's `Array.prototype`
 intrinsic but if we keep a separate Heap for each Realm then this is not a
 problem.
@@ -121,8 +121,7 @@ all held together. This is somewhat simpler to reason about and much easier to
 write out in code than the slice-based one up above. That being said, this is
 also very likely to have worse performance: This struct's size is larger because
 of padding bytes and the backing object index held within, and because it is not
-split into separate slices loading one piece of data loads all the data. This is
-often leads to wasted memory bandwidth: Reading an Array's length does not need
+split into separate slices loading one piece of data loads all the data. This often leads to wasted memory bandwidth: Reading an Array's length does not need
 any other data, and reading an element by index does not need the backing
 object.
 
