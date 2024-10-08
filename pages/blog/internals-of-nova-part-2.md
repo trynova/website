@@ -90,11 +90,10 @@ columns.
 Additionally a fourth sparse column of backing object references is needed. This
 is the `backing_objects` hash map. Arrays with properties (aside from 'length')
 or a non-default prototype require an entry in this column. The absolute
-majority of Arrays do not have these and this way we avoid the need to allocate any
-memory for them. This does assume that we can know the Array's Realm
-so that we can create a backing object with that Realm's `Array.prototype`
-intrinsic but if we keep a separate Heap for each Realm then this is not a
-problem.
+majority of Arrays do not have these and this way we avoid the need to allocate
+any memory for them. This does assume that we can know the Array's Realm so that
+we can create a backing object with that Realm's `Array.prototype` intrinsic but
+if we keep a separate Heap for each Realm then this is not a problem.
 
 While the above is what I want our Array heap to eventually look like, we are
 not there yet. Currently Nova's Array heap vector looks like this:
@@ -121,7 +120,8 @@ all held together. This is somewhat simpler to reason about and much easier to
 write out in code than the slice-based one up above. That being said, this is
 also very likely to have worse performance: This struct's size is larger because
 of padding bytes and the backing object index held within, and because it is not
-split into separate slices loading one piece of data loads all the data. This often leads to wasted memory bandwidth: Reading an Array's length does not need
+split into separate slices loading one piece of data loads all the data. This
+often leads to wasted memory bandwidth: Reading an Array's length does not need
 any other data, and reading an element by index does not need the backing
 object.
 
@@ -198,13 +198,13 @@ the byte, they load it by the cache line which is usually 64 bytes. Loading a
 new cache line means that a previous cache line must be evicted from cache.
 Every 8 byte pointer we replace with a 4 byte index saves us 4 bytes. Every
 pointer that we entirely eliminate from the common case saves us 8 bytes. Every
-byte we load into CPU cache is matched by a byte evicted, and every byte we know
-is unused by a particular operation is always either wasted CPU cycles spent
-replacing an old unnecessary byte to a new unnecessary byte, or may be an active
-loss if we replace an one old byte that we were going to be using soon. With
-this in mind, we should ensure that common operations do not load any unused
-bytes by splitting data onto separate cache lines. This stops us from loading
-known unused bytes, and instead loads adjacent data of the same type.
+byte we load into CPU cache despite knowing it is unused by the current
+operation is always either wasted work spent evicting an old unnecessary byte to
+make room for a new unnecessary byte, or is an active loss if we evict an one
+old byte that we were going to be using soon. With this in mind, we should
+ensure that common operations do not load any unused bytes by splitting data
+onto separate cache lines. This stops us from loading known unused bytes, and
+instead loads adjacent data of the same type.
 
 What does the adjacent data help then? Looking at an operation in a vacuum, it
 does not help at all. But the code does not run in a vacuum, and the common
