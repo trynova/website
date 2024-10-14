@@ -6,7 +6,6 @@
 }
 
 .links {
-    margin-left: auto;
     display: flex;
     flex-wrap: wrap;
     align-items: end;

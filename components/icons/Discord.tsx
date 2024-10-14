@@ -1,9 +1,17 @@
-export function DiscordIcon({ class: className }: { class?: string }) {
+export function DiscordIcon(
+    { class: className, width, height }: {
+        class?: string;
+        width?: number | string;
+        height?: number | string;
+    },
+) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             class={className}
+            width={width}
+            height={height}
         >
             <path
                 fill="currentColor"

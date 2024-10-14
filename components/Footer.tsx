@@ -13,10 +13,10 @@ export function Footer() {
       </a>
       <div class={classes.links}>
         <a href="https://github.com/trynova/nova">
-          <GithubIcon />
+          <GithubIcon width="2em" height="2em" />
         </a>
         <a href="https://discord.gg/RTrgJzXKUM">
-          <DiscordIcon />
+          <DiscordIcon width="2em" height="2em" />
         </a>
       </div>
     </footer>
