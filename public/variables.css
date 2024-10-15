@@ -3,66 +3,66 @@
 @import url("fonts/pt-mono/font.css");
 
 :root {
-    --font-sans: "PT Sans", sans-serif;
-    --font-serif: "PT Serif", serif;
-    --font-mono: "PT Mono", monospace;
+  --font-sans: "PT Sans", sans-serif;
+  --font-serif: "PT Serif", serif;
+  --font-mono: "PT Mono", monospace;
 
-    --neutral-0: #ffffff;
-    --neutral-50: #fefefe;
-    --neutral-100: #efefef;
-    --neutral-200: #dcdcdc;
-    --neutral-300: #bdbdbd;
-    --neutral-400: #989898;
-    --neutral-500: #7c7c7c;
-    --neutral-600: #656565;
-    --neutral-700: #525252;
-    --neutral-800: #464646;
-    --neutral-900: #3d3d3d;
-    --neutral-950: #0a0a0a;
-    --neutral-1000: #000000;
+  --neutral-0: #ffffff;
+  --neutral-50: #fefefe;
+  --neutral-100: #efefef;
+  --neutral-200: #dcdcdc;
+  --neutral-300: #bdbdbd;
+  --neutral-400: #989898;
+  --neutral-500: #7c7c7c;
+  --neutral-600: #656565;
+  --neutral-700: #525252;
+  --neutral-800: #464646;
+  --neutral-900: #3d3d3d;
+  --neutral-950: #0a0a0a;
+  --neutral-1000: #000000;
 
-    --accent-50: #f2f3fb;
-    --accent-100: #e7e9f8;
-    --accent-200: #d4d7f1;
-    --accent-300: #babde7;
-    --accent-400: #9e9ddc;
-    --accent-500: #8c85cf;
-    --accent-600: #796cbf;
-    --accent-700: #685ba7;
-    --accent-800: #564b88;
-    --accent-900: #48426d;
-    --accent-950: #27233a;
+  --accent-50: #f2f3fb;
+  --accent-100: #e7e9f8;
+  --accent-200: #d4d7f1;
+  --accent-300: #babde7;
+  --accent-400: #9e9ddc;
+  --accent-500: #8c85cf;
+  --accent-600: #796cbf;
+  --accent-700: #685ba7;
+  --accent-800: #564b88;
+  --accent-900: #48426d;
+  --accent-950: #27233a;
 
-    --chart-pass: #2e854b;
-    --chart-fail: #b52b2b;
-    --chart-crash: #821d1d;
-    --chart-skip: #d9a620;
-    --chart-timeout: #d9a620;
-    --chart-unresolved: #d9a620;
+  --chart-pass: #2e854b;
+  --chart-fail: #b52b2b;
+  --chart-crash: #821d1d;
+  --chart-skip: #d9a620;
+  --chart-timeout: #d9a620;
+  --chart-unresolved: #d9a620;
 
-    --selection-color: var(--neutral-950);
+  --selection-color: var(--neutral-950);
 
-    --scrollbar-track-color: var(--neutral-0);
-    --scrollbar-thumb-color: var(--neutral-950);
-    --scrollbar-size: 8px;
+  --scrollbar-track-color: var(--neutral-0);
+  --scrollbar-thumb-color: var(--neutral-950);
+  --scrollbar-size: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
-        --neutral-0: #000000;
-        --neutral-50: #0a0a0a;
-        --neutral-100: #3d3d3d;
-        --neutral-200: #464646;
-        --neutral-300: #525252;
-        --neutral-400: #656565;
-        --neutral-500: #7c7c7c;
-        --neutral-600: #989898;
-        --neutral-700: #bdbdbd;
-        --neutral-800: #dcdcdc;
-        --neutral-900: #efefef;
-        --neutral-950: #fefefe;
-        --neutral-1000: #ffffff;
+  :root {
+    --neutral-0: #000000;
+    --neutral-50: #0a0a0a;
+    --neutral-100: #3d3d3d;
+    --neutral-200: #464646;
+    --neutral-300: #525252;
+    --neutral-400: #656565;
+    --neutral-500: #7c7c7c;
+    --neutral-600: #989898;
+    --neutral-700: #bdbdbd;
+    --neutral-800: #dcdcdc;
+    --neutral-900: #efefef;
+    --neutral-950: #fefefe;
+    --neutral-1000: #ffffff;
 
-        --selection-color: #727073;
-    }
+    --selection-color: #727073;
+  }
 }

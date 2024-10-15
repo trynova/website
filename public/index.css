@@ -2,50 +2,50 @@
 @import url("variables.css");
 
 body {
-    font-family: var(--font-sans);
-    color: var(--neutral-950);
-    background-color: var(--neutral-0);
+  font-family: var(--font-sans);
+  color: var(--neutral-950);
+  background-color: var(--neutral-0);
 }
 
 *::selection {
-    background-color: var(--selection-color);
-    color: white;
+  background-color: var(--selection-color);
+  color: white;
 }
 
 body::-webkit-scrollbar {
-    width: var(--scrollbar-size);
+  width: var(--scrollbar-size);
 }
 
 body::-webkit-scrollbar-track {
-    background: var(--scrollbar-track-color);
+  background: var(--scrollbar-track-color);
 }
 
 body::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb-color);
+  background: var(--scrollbar-thumb-color);
 }
 
 @supports not selector(::-webkit-scrollbar) {
-    body {
-        scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
-    }
+  body {
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  }
 }
 
 a {
-    all: unset;
-    cursor: pointer;
-    text-decoration: underline;
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 a:hover {
-    text-decoration: underline 2px;
+  text-decoration: underline 2px;
 }
 
 .root {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    padding: 1rem;
-    margin: 0 auto;
-    max-width: 800px;
-    min-height: 100dvh;
+  padding: 1rem;
+  margin: 0 auto;
+  max-width: 800px;
+  min-height: 100dvh;
 }

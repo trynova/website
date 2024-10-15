@@ -1,26 +1,26 @@
 .container {
-    all: unset;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  all: unset;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .link {
-    display: contents;
+  display: contents;
 }
 
 .meta {
-    display: block;
-    font-size: 0.9rem;
-    color: var(--neutral-800);
-    white-space: pre-wrap;
+  display: block;
+  font-size: 0.9rem;
+  color: var(--neutral-800);
+  white-space: pre-wrap;
 }
 
 .meta > * {
-    display: inline-block;
+  display: inline-block;
 }
 
 .container:hover .title {
-    text-decoration: underline 2px;
+  text-decoration: underline 2px;
 }

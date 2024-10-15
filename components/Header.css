@@ -1,24 +1,24 @@
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--neutral-950);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--neutral-950);
 }
 
 .logo {
-    all: unset;
-    cursor: pointer;
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .logo > svg {
-    height: 2rem;
-    width: 2rem;
+  height: 2rem;
+  width: 2rem;
 }
 
 .navigation {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 1rem;
 }
