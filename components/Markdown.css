@@ -1,0 +1,48 @@
+.markdown {
+  word-wrap: break-word;
+
+  > *:first-child {
+    margin-top: 0 !important;
+  }
+
+  > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  a {
+    text-decoration: underline 1px;
+  }
+
+  a:hover {
+    text-decoration: underline 2px;
+  }
+
+  hr {
+    background-color: var(--neutral-400);
+    height: 2px;
+    margin: 2rem 1rem;
+    border: none;
+  }
+
+  p,
+  blockquote,
+  ul,
+  ol,
+  dl,
+  table,
+  pre,
+  details {
+    margin-bottom: 2rem;
+  }
+
+  p > code {
+    background-color: var(--neutral-100);
+    outline: 0.15em solid var(--neutral-100);
+  }
+
+  pre:has(code) {
+    outline: 1rem solid var(--neutral-100);
+    background-color: var(--neutral-100);
+    overflow: scroll;
+  }
+}

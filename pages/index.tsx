@@ -5,14 +5,19 @@ import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
+import type { Metrics } from "./test262.tsx";
+
+const metrics = await (await fetch(
+  "https://github.com/trynova/nova/raw/refs/heads/main/tests/metrics.json",
+)).json() as Metrics;
 
 function Index() {
   return (
     <Layout>
       <h1>Welcome!</h1>
       <p>
-        Nova is a <a href="https://tc39.es/ecma262/">ECMAScript</a> and{" "}
-        <a href="https://webassembly.org/">WebAssembly</a>{" "}
+        Nova is a JavaScript (<a href="https://tc39.es/ecma262/">ECMAScript</a>)
+        and <a href="https://webassembly.org/">WebAssembly</a>{" "}
         engine written in Rust and following{" "}
         <a href="https://en.wikipedia.org/wiki/Data-oriented_design">
           data-oriented design principles
@@ -24,7 +29,8 @@ function Index() {
         The engine is still very limited in it's capabilities only passing about
         {" "}
         <a href={href(import.meta.resolve("./test262.tsx"))}>
-          43% of the test262 test suite
+          {((metrics.results.pass / metrics.total) * 100).toFixed()}% of the
+          test262 test suite
         </a>.{" "}
         However development is ongoing and we are quickly improving the engine.
         If you are interested in the project, please check out the{" "}

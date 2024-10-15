@@ -16,7 +16,7 @@ export function Header() {
         <a href={`${BASE_PATH}/talks`}>Talks</a>
         <a href={`${BASE_PATH}/blog`}>Blog</a>
         <a href={`${BASE_PATH}/test262`}>Test262</a>
-        <a href="https://github.com/trynova/nova">Contribute</a>
+        <a href={`${BASE_PATH}/contributing`}>Contribute</a>
       </nav>
     </header>
   );

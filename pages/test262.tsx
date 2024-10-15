@@ -12,7 +12,7 @@ import { Layout } from "components/Layout.tsx";
 
 const classes = await css(import.meta.resolve("./test262.css"));
 
-interface Metrics {
+export interface Metrics {
   results: {
     crash: number;
     fail: number;
@@ -153,12 +153,36 @@ function Test262() {
           <th>Crash</th>
         </tr>
         <tr>
-          <td>{latest.metrics.results.pass}</td>
-          <td>{latest.metrics.results.skip}</td>
-          <td>{latest.metrics.results.timeout}</td>
-          <td>{latest.metrics.results.unresolved}</td>
-          <td>{latest.metrics.results.fail}</td>
-          <td>{latest.metrics.results.crash}</td>
+          <td>
+            {latest.metrics.results.pass}{" "}
+            ({((latest.metrics.results.pass / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
+          <td>
+            {latest.metrics.results.skip}{" "}
+            ({((latest.metrics.results.skip / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
+          <td>
+            {latest.metrics.results.timeout}{" "}
+            ({((latest.metrics.results.timeout / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
+          <td>
+            {latest.metrics.results.unresolved}{" "}
+            ({((latest.metrics.results.unresolved / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
+          <td>
+            {latest.metrics.results.fail}{" "}
+            ({((latest.metrics.results.fail / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
+          <td>
+            {latest.metrics.results.crash}{" "}
+            ({((latest.metrics.results.crash / latest.metrics.total) * 100)
+              .toFixed(1)}%)
+          </td>
         </tr>
       </table>
       <p>
