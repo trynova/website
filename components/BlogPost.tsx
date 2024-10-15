@@ -5,6 +5,7 @@ import { Markdown } from "components/Markdown.tsx";
 const classes = await css(import.meta.resolve("./BlogPost.css"));
 
 export interface BlogPostProps {
+  file: string;
   body: string;
   meta: BlogPostMeta;
 }
