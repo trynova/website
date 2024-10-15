@@ -3,7 +3,7 @@
   "tasks": {
     "each": "deno run -A scripts/each.ts",
     "build": "deno task each run -A -- pages/**/*.[jt]s[x]",
-    "watch": "deno task each run -A --watch -- pages/**/*.[jt]s[x]",
+    "watch": "deno task each run -A --watch=components,pages,public,utils -- pages/**/*.[jt]s[x]",
     "serve": "deno task watch & deno run -A scripts/serve.ts",
     "clean": "rm -rf build"
   },

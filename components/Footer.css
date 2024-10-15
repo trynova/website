@@ -1,8 +1,9 @@
 .footer {
   display: flex;
-  justify-content: center;
   border-top: 2px solid var(--neutral-950);
   padding-top: 1rem;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .links {
@@ -19,4 +20,9 @@
 
 .links > a:hover {
   color: var(--neutral-800);
+}
+
+.links > a > svg {
+  width: 1.5em;
+  height: 1.5em;
 }
