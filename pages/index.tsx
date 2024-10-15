@@ -24,7 +24,7 @@ function Index() {
         The engine is still very limited in it's capabilities only passing about
         {" "}
         <a href={href(import.meta.resolve("./test262.tsx"))}>
-          33% of the test262 test suite
+          43% of the test262 test suite
         </a>.{" "}
         However development is ongoing and we are quickly improving the engine.
         If you are interested in the project, please check out the{" "}
