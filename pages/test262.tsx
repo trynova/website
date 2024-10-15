@@ -37,7 +37,9 @@ function dataset(datapoints: typeof data, result: keyof Metrics["results"]) {
   };
 }
 
-const octokit = new Octokit();
+const octokit = new Octokit({
+  auth: Deno.env.get("GITHUB_TOKEN"),
+});
 const commits = await octokit.rest.repos.listCommits({
   owner: "trynova",
   repo: "nova",
@@ -58,6 +60,8 @@ const data = (await Promise.all(commits.data.map(async (commit) => {
 }))).sort(({ date: a }, { date: b }) => Temporal.Instant.compare(a, b));
 
 if (data.length === 1) data.push(data[0]);
+
+const latest = data.at(-1)!;
 
 function Test262() {
   return (
@@ -132,6 +136,14 @@ function Test262() {
         }}
       />
       <table class={classes.table}>
+        <caption>
+          <code>{latest.message}</code>
+          <br />
+          At {latest.date.toLocaleString("sv-SE")} commit{" "}
+          <a href={`https://github.com/trynova/nova/commit/${latest.sha}`}>
+            {latest.sha}
+          </a>
+        </caption>
         <tr>
           <th>Pass</th>
           <th>Skip</th>
@@ -141,12 +153,12 @@ function Test262() {
           <th>Crash</th>
         </tr>
         <tr>
-          <td>{data.at(-1)?.metrics.results.pass}</td>
-          <td>{data.at(-1)?.metrics.results.skip}</td>
-          <td>{data.at(-1)?.metrics.results.timeout}</td>
-          <td>{data.at(-1)?.metrics.results.unresolved}</td>
-          <td>{data.at(-1)?.metrics.results.fail}</td>
-          <td>{data.at(-1)?.metrics.results.crash}</td>
+          <td>{latest.metrics.results.pass}</td>
+          <td>{latest.metrics.results.skip}</td>
+          <td>{latest.metrics.results.timeout}</td>
+          <td>{latest.metrics.results.unresolved}</td>
+          <td>{latest.metrics.results.fail}</td>
+          <td>{latest.metrics.results.crash}</td>
         </tr>
       </table>
       <p>

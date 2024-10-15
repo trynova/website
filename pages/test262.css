@@ -19,3 +19,9 @@
 .table td {
   font-family: var(--font-mono);
 }
+
+.table caption {
+  caption-side: bottom;
+  padding: 8px;
+  font-size: 12px;
+}
