@@ -26,7 +26,7 @@ jobs:
       - name: Setup deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v2.x
       - name: Build
         run: deno task build
       - name: Setup Pages
@@ -34,7 +34,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './build/'
+          path: "./build/"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

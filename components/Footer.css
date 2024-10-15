@@ -1,22 +1,22 @@
 .footer {
-    display: flex;
-    justify-content: center;
-    border-top: 2px solid var(--neutral-950);
-    padding-top: 1rem;
+  display: flex;
+  justify-content: center;
+  border-top: 2px solid var(--neutral-950);
+  padding-top: 1rem;
 }
 
 .links {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
 }
 
 .links > a {
-    margin-right: 1rem;
-    color: var(--neutral-950);
-    text-decoration: none;
+  margin-right: 1rem;
+  color: var(--neutral-950);
+  text-decoration: none;
 }
 
 .links > a:hover {
-    color: var(--neutral-800);
+  color: var(--neutral-800);
 }
