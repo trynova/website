@@ -131,6 +131,24 @@ function Test262() {
           ],
         }}
       />
+      <table class={classes.table}>
+        <tr>
+          <th>Pass</th>
+          <th>Skip</th>
+          <th>Timeout</th>
+          <th>Unresolved</th>
+          <th>Fail</th>
+          <th>Crash</th>
+        </tr>
+        <tr>
+          <td>{data.at(-1)?.metrics.results.pass}</td>
+          <td>{data.at(-1)?.metrics.results.skip}</td>
+          <td>{data.at(-1)?.metrics.results.timeout}</td>
+          <td>{data.at(-1)?.metrics.results.unresolved}</td>
+          <td>{data.at(-1)?.metrics.results.fail}</td>
+          <td>{data.at(-1)?.metrics.results.crash}</td>
+        </tr>
+      </table>
       <p>
         A more detailed breakdown of the current test results can be viewed on
         {" "}
