@@ -1,14 +1,15 @@
-import * as marked from "marked";
-
 import { css } from "utils/css.ts";
-
-import { BlogPostProps } from "../pages/blog/utils.ts";
+import type { BlogPostMeta } from "../pages/blog/utils.ts";
+import { Markdown } from "components/Markdown.tsx";
 
 const classes = await css(import.meta.resolve("./BlogPost.css"));
 
-export function BlogPost({ body, meta }: BlogPostProps) {
-  const html = marked.parse(body, { async: false }) as string;
+export interface BlogPostProps {
+  body: string;
+  meta: BlogPostMeta;
+}
 
+export function BlogPost({ body, meta }: BlogPostProps) {
   return (
     <article class={classes.container}>
       <header>
@@ -31,10 +32,7 @@ export function BlogPost({ body, meta }: BlogPostProps) {
           )}
         </section>
       </header>
-      <section
-        class={classes.body}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <Markdown body={body} />
     </article>
   );
 }

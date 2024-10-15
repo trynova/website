@@ -2,6 +2,7 @@ import { extractYaml } from "@std/front-matter";
 import { dirname } from "@std/path";
 
 import { read, walk } from "utils/fs.ts";
+import type { BlogPostProps } from "components/BlogPost.tsx";
 
 interface BlogPostAttrs {
   title: string;
@@ -15,12 +16,6 @@ export interface BlogPostMeta {
   description: string;
   date: Temporal.PlainDate;
   authors: { name: string; url: string }[];
-}
-
-export interface BlogPostProps {
-  file: string;
-  body: string;
-  meta: BlogPostMeta;
 }
 
 export async function* posts(): AsyncGenerator<BlogPostProps> {
