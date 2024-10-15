@@ -5,6 +5,11 @@ body {
   font-family: var(--font-sans);
   color: var(--neutral-950);
   background-color: var(--neutral-0);
+
+  /* Fix macOS font rendering. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
 }
 
 *::selection {
