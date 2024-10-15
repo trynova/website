@@ -52,4 +52,15 @@
   details {
     margin-bottom: 2rem;
   }
+
+  p > code {
+    background-color: var(--neutral-100);
+    outline: 0.15em solid var(--neutral-100);
+  }
+
+  pre:has(code) {
+    outline: 1rem solid var(--neutral-100);
+    background-color: var(--neutral-100);
+    overflow: scroll;
+  }
 }
