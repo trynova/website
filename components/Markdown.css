@@ -35,6 +35,10 @@
     margin-bottom: 2rem;
   }
 
+  li li {
+    margin-left: 2rem;
+  }
+
   p > code {
     background-color: var(--neutral-100);
     outline: 0.15em solid var(--neutral-100);
