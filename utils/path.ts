@@ -3,10 +3,13 @@ import { BASE_PATH, BUILD_PATH, LOCATION, PAGES_PATH } from "utils/consts.ts";
 /**
  * Takes a page path and returns it as the output path of said page.
  */
-export function output(path: string): string {
+export function output(
+  path: string,
+  extension: `.${string}` = ".html",
+): string {
   return path
     .replace(PAGES_PATH, BUILD_PATH)
-    .replace(/\.(tsx|md)$/, ".html");
+    .replace(/\.(tsx|md)$/, extension);
 }
 
 /**
