@@ -1,3 +1,27 @@
 .chart {
   height: 100%;
 }
+
+.table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 4px;
+  border: 1px solid var(--neutral-950);
+}
+
+.table td {
+  font-family: var(--font-mono);
+}
+
+.table caption {
+  caption-side: bottom;
+  padding: 8px;
+  font-size: 12px;
+}
