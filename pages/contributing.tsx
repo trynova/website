@@ -25,6 +25,7 @@ if (import.meta.main) {
     html(renderToString(<Contributing />), {
       title: `Contributing · Nova`,
       description: "Guide for contributing to the Nova project",
+      canonical: "/contributing",
     }),
   );
 }

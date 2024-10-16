@@ -1,7 +1,7 @@
 import { renderToString } from "preact-render-to-string";
 
 import { html } from "utils/html.ts";
-import { output } from "utils/path.ts";
+import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
@@ -25,6 +25,7 @@ if (import.meta.main) {
         title: `${post.meta.title} · Nova`,
         description: post.meta.description,
         author: post.meta.authors.map((author) => author.name).join(", "),
+        canonical: href(post.file)
       }),
     );
   }

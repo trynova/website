@@ -11,9 +11,9 @@ if (import.meta.main) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${absoluteHref("")}</loc></url>
   <url><loc>${absoluteHref("/talks")}</loc></url>
-  <url><loc>${absoluteHref("/blog")}</loc></url>
   <url><loc>${absoluteHref("/test262")}</loc></url>
   <url><loc>${absoluteHref("/contributing")}</loc></url>
+  <url><loc>${absoluteHref("/blog/")}</loc></url>
 ${
       allPosts.map((post) => (`\
   <url>

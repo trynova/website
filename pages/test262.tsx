@@ -197,6 +197,10 @@ function Test262() {
 if (import.meta.main) {
   await write(
     output(import.meta.url),
-    html(renderToString(<Test262 />), { title: "Test262 · Nova" }),
+    html(renderToString(<Test262 />), {
+      title: "Test262 · Nova",
+      description: "The Nova engines current and historical Test262 test results",
+      canonical: "/test262",
+    }),
   );
 }
