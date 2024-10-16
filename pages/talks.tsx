@@ -66,6 +66,10 @@ function Talks() {
 if (import.meta.main) {
   await write(
     output(import.meta.url),
-    html(renderToString(<Talks />), { title: "Talks · Nova" }),
+    html(renderToString(<Talks />), {
+      title: "Talks · Nova",
+      description: "Talks about the Nova JavaScript engine",
+      canonical: "/talks",
+    }),
   );
 }

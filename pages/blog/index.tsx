@@ -35,7 +35,11 @@ function Index() {
 if (import.meta.main) {
   await write(
     output(import.meta.url),
-    html(renderToString(<Index />), { title: "Blog · Nova" }),
+    html(renderToString(<Index />), {
+      title: "Blog · Nova",
+      description: "Blog posts about the Nova project",
+      canonical: "/blog/",
+    }),
   );
 
   const feed = new Feed({

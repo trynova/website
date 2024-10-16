@@ -46,6 +46,11 @@ function Index() {
 if (import.meta.main) {
   await write(
     output(import.meta.url),
-    html(renderToString(<Index />), { title: "Nova" }),
+    html(renderToString(<Index />), {
+      title: "Nova",
+      description:
+        "Nova is a JavaScript and WebAssembly engine written in Rust and following data-oriented design principles",
+      canonical: "",
+    }),
   );
 }
