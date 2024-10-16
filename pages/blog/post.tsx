@@ -25,7 +25,7 @@ if (import.meta.main) {
         title: `${post.meta.title} · Nova`,
         description: post.meta.description,
         author: post.meta.authors.map((author) => author.name).join(", "),
-        canonical: href(post.file)
+        canonical: href(post.file),
       }),
     );
   }

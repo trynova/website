@@ -48,7 +48,9 @@ if (import.meta.main) {
     output(import.meta.url),
     html(renderToString(<Index />), {
       title: "Nova",
-      description: "Nova is a JavaScript and WebAssembly engine written in Rust and following data-oriented design principles",
+      description:
+        "Nova is a JavaScript and WebAssembly engine written in Rust and following data-oriented design principles",
+      canonical: "",
     }),
   );
 }
