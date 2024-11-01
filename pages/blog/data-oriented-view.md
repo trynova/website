@@ -22,7 +22,7 @@ features from the special exotic object usages. That is where we should start.
 
 ## Learning from giants
 
-The V8 engine is hard to beat in its performance. If you bust out your trustly
+The V8 engine is hard to beat in its performance. If you bust out your trusty
 Node.js version v23.1.0 and run the following command
 
 ```sh
@@ -81,8 +81,8 @@ sum up field sizes together.
 If we open up a recent Chromium browser and use the memory snapshot feature to
 inspect the size of a `DataView` instance, we can see that it is only 48 bytes.
 This significant reduction is achieved by a double-whammy of pointer compression
-which drops intra-heap pointer sizes to just 4 bytes a piece, this makes `map`,
-`properties`, `elements`, and `buffer` take half the size, and a
+which drops intra-heap pointer sizes to just 4 bytes a piece (this makes `map`,
+`properties`, `elements`, and `buffer` take half the size) and a
 [recently merged change to V8](https://issues.chromium.org/issues/346350847)
 that removed the need to keep embedder slots in `DataView` instances. Even with
 these improvements, 48 bytes is 3 times the optimal memory usage for a pointer
@@ -116,8 +116,8 @@ nothing more we can do. It's obviously impossible to improve on this.
 
 What if I told you we can get our `DataView` object's size down to 12 bytes for
 the common case: Would you believe me? Maybe you would. What if I told you we
-can get it down to just 4 bytes: That should be blatantly impossible, right? To
-fight giants, you must become impossibly small.
+can get it down to just 4 bytes: That should be blatantly impossible, right? But
+to fight giants, you must become impossibly small!
 
 ### A dozen, no more!
 
@@ -154,7 +154,7 @@ yet. We have more shrinking that we can do!
 ### The Elite Four
 
 Think back to the V8 debug print from earlier: We used a `DataView` to view the
-entirety of an `ArrayBuffer`. If we assume that the most `DataView` construction
+entirety of an `ArrayBuffer`. If we assume that most `DataView` construction
 cases are one of
 
 ```ts
@@ -170,9 +170,9 @@ then the following points will usually be true:
   `[[ArrayBufferByteLength]]`.
 
 So, here's a thing we could do: We could opt to never store the `byte_offset`
-and `byte_length` fields in our `DataViewHeapData` struct, and only if those are
-non-default values then we'll store them in the side-tables. When we access a
-`DataView`'s data, we'll have to check if those side-tables contain data for us:
+and `byte_length` fields in our `DataViewHeapData` struct. Only if those have
+non-default values will we'll store them in the side-tables. When we access a
+`DataView`'s data, we'll then have to check if those side-tables contain data for us:
 The optimal case is that the tables turn out to be entirely empty in which case
 we do not even need to perform a hashing of our `DataView`, or look inside the
 side-table.
@@ -184,17 +184,17 @@ struct DataViewHeapData(ArrayBuffer);
 ```
 
 That is only 4 bytes: Four elite bytes. We are now 4 times more memory-compact
-than the "optimal case", or 12 times better than V8 with pointer compression on.
-Note though, that this is a very fiddly optimisation that may not make sense in
+than the "optimal case", and 12 times better than V8 with pointer compression on.
+Unfortunately this is a very fiddly optimisation that may not make sense in
 the end: If any `DataView` has a non-default byte offset or length value, it
-forces all `DataView`s to perform a hash map lookup (or two) to check its offset
-and length values, and this hashing needs to be performed on every API call even
+forces all `DataView`s to perform a hash map lookup (or two) to check their offset
+and length values. This hashing also needs to be performed on every API call, even
 if those calls happen in a tight loop.
 
-Worse yet, the hash map lookup costs not only from the hash calculation, but it
-has to perform at least one extra cache line read to read from the side-table.
-So our attempt to reduce the size of `DataView`s to save on cache line loads
-actually lead us to very likely have to read an extra cache line. And,
+Additionally, the hash map lookup costs not only a hash calculation but it also
+has to perform at least one cache line read to look for our calculated hash in the side-table.
+So our attempt to reduce the size of `DataView`s to save on cache line reads
+actually lead us to likely add an extra cache line read. And,
 `DataView` is also an unlikely object type to appear in very tight loops where
 we're iterating over multiple `DataView`s so the ability to read 16
 `DataViewHeapData` structs in a single cache line is unlikely to give us much
@@ -203,17 +203,17 @@ concrete benefits.
 ## Growing up, taking stock
 
 So [this](https://github.com/trynova/nova/pull/447) is where we are: We have a
-way to make `DataView` take only 4 bytes, but we think it probably does not make
-sense. Instead we're going with the 12 byte version, increased to 16 bytes
-because we currently do not have Realm-specific heaps and thus we need the
+way to make `DataView` take only 4 bytes but we think it probably does not make
+sense and instead we're going with the 12 byte version. This increases to 16 bytes
+because we currently do not have Realm-specific heaps and thus need the
 `backing_object` in the `DataViewHeapData` struct. (Never mind that we do not
-actually have proper multi-Realm heaps working either and with the current,
+actually have a proper multi-Realm heap working either and with the current,
 incomplete system we could fully well use a hash map side-table for backing
 objects: These things take time you know.)
 
-This 12 byte version should give us a good balance between memory usage and easy
-memory access patterns, avoiding both saving memory that is nearly always
-statically zero and introducing a performance cliff on the supposed happy path
+The 12 byte version should give us a good balance between memory usage and easy
+memory access patterns, at the same time avoiding storing data that is nearly always
+statically zero and avoiding introducing a performance cliff on the supposed happy path
 from hash map calculations if even a single non-default `DataView` exists in the
 runtime.
 
