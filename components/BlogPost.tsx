@@ -24,10 +24,13 @@ export function BlogPost({ body, meta }: BlogPostProps) {
           </time>
           {meta.authors.length >= 1 && (
             <>
-              {" "}by {meta.authors.map((author) => (
-                <address>
-                  <a href={author.url}>{author.name}</a>
-                </address>
+              {" "}by {meta.authors.map((author, index) => (
+                <>
+                  <address>
+                    <a href={author.url}>{author.name}</a>
+                  </address>
+                  {index < meta.authors.length - 1 ? ", " : ""}
+                </>
               ))}
             </>
           )}
