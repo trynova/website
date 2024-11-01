@@ -1,7 +1,7 @@
 ---
 title: Data-oriented View
 description: Improving the JavaScript DataView builtin with data-oriented design.
-date: 2024-10-27
+date: 2024-11-01
 authors:
   - name: Aapo Alasuutari
     url: https://github.com/aapoalas
