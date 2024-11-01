@@ -19,10 +19,13 @@ export function BlogPostCard({ file, meta }: BlogPostProps) {
             </time>
             {meta.authors.length >= 1 && (
               <>
-                {" "}by {meta.authors.map((author) => (
-                  <address>
-                    {author.name}
-                  </address>
+                {" "}by {meta.authors.map((author, index) => (
+                  <>
+                    <address>
+                      {author.name}
+                    </address>
+                    {index < meta.authors.length - 1 ? ", " : ""}
+                  </>
                 ))}
               </>
             )}

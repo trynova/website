@@ -172,10 +172,10 @@ then the following points will usually be true:
 So, here's a thing we could do: We could opt to never store the `byte_offset`
 and `byte_length` fields in our `DataViewHeapData` struct. Only if those have
 non-default values will we'll store them in the side-tables. When we access a
-`DataView`'s data, we'll then have to check if those side-tables contain data for us:
-The optimal case is that the tables turn out to be entirely empty in which case
-we do not even need to perform a hashing of our `DataView`, or look inside the
-side-table.
+`DataView`'s data, we'll then have to check if those side-tables contain data
+for us: The optimal case is that the tables turn out to be entirely empty in
+which case we do not even need to perform a hashing of our `DataView`, or look
+inside the side-table.
 
 So this is what we end up with:
 
@@ -184,17 +184,17 @@ struct DataViewHeapData(ArrayBuffer);
 ```
 
 That is only 4 bytes: Four elite bytes. We are now 4 times more memory-compact
-than the "optimal case", and 12 times better than V8 with pointer compression on.
-Unfortunately this is a very fiddly optimisation that may not make sense in
+than the "optimal case", and 12 times better than V8 with pointer compression
+on. Unfortunately this is a very fiddly optimisation that may not make sense in
 the end: If any `DataView` has a non-default byte offset or length value, it
-forces all `DataView`s to perform a hash map lookup (or two) to check their offset
-and length values. This hashing also needs to be performed on every API call, even
-if those calls happen in a tight loop.
+forces all `DataView`s to perform a hash map lookup (or two) to check their
+offset and length values. This hashing also needs to be performed on every API
+call, even if those calls happen in a tight loop.
 
 Additionally, the hash map lookup costs not only a hash calculation but it also
-has to perform at least one cache line read to look for our calculated hash in the side-table.
-So our attempt to reduce the size of `DataView`s to save on cache line reads
-actually lead us to likely add an extra cache line read. And,
+has to perform at least one cache line read to look for our calculated hash in
+the side-table. So our attempt to reduce the size of `DataView`s to save on
+cache line reads actually lead us to likely add an extra cache line read. And,
 `DataView` is also an unlikely object type to appear in very tight loops where
 we're iterating over multiple `DataView`s so the ability to read 16
 `DataViewHeapData` structs in a single cache line is unlikely to give us much
@@ -204,18 +204,18 @@ concrete benefits.
 
 So [this](https://github.com/trynova/nova/pull/447) is where we are: We have a
 way to make `DataView` take only 4 bytes but we think it probably does not make
-sense and instead we're going with the 12 byte version. This increases to 16 bytes
-because we currently do not have Realm-specific heaps and thus need the
+sense and instead we're going with the 12 byte version. This increases to 16
+bytes because we currently do not have Realm-specific heaps and thus need the
 `backing_object` in the `DataViewHeapData` struct. (Never mind that we do not
 actually have a proper multi-Realm heap working either and with the current,
 incomplete system we could fully well use a hash map side-table for backing
 objects: These things take time you know.)
 
 The 12 byte version should give us a good balance between memory usage and easy
-memory access patterns, at the same time avoiding storing data that is nearly always
-statically zero and avoiding introducing a performance cliff on the supposed happy path
-from hash map calculations if even a single non-default `DataView` exists in the
-runtime.
+memory access patterns, at the same time avoiding storing data that is nearly
+always statically zero and avoiding introducing a performance cliff on the
+supposed happy path from hash map calculations if even a single non-default
+`DataView` exists in the runtime.
 
 The Nova JavaScript engine is built upon data-oriented design, which points us
 towards opportunities that may seem improbable or even impossible in a
