@@ -17,7 +17,7 @@ binary data contained in an `ArrayBuffer`. Recently, Nova has been added the
 interaction with them.
 
 But what should our `DataView` look like? Remember that we use the
-[backing object trick](./internals-of-nova-part-1.md) to separate object
+[backing object trick](./internals-of-nova-part-1) to separate object
 features from the special exotic object usages. That is where we should start.
 
 ## Learning from giants
