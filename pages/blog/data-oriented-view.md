@@ -12,7 +12,7 @@ authors:
 The ECMAScript specification contains many purpose-built exotic objects that
 have very limited and very specific usages. One of them is the `DataView`
 builtin constructor which is meant for mixed-size reads and writes into the
-binary data contained in an `ArrayBuffer`. Recently, Nova has been added the
+binary data contained in an `ArrayBuffer`. Recently, Nova added the
 `ArrayBuffer` constructor and now it is time to add `DataView` to enable useful
 interaction with them.
 
