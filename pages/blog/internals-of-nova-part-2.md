@@ -7,7 +7,7 @@ authors:
     url: https://github.com/aapoalas
 ---
 
-[Last time](./internals-of-nova-part-1.md) I talked about how non-ordinary
+[Last time](./internals-of-nova-part-1) I talked about how non-ordinary
 objects in Nova delegate their object features to a "backing object". This
 allows JavaScript's "exotic objects" to focus on their core features and avoid
 getting bogged down in the details of JavaScript object-hood. This saves us some
