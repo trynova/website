@@ -131,5 +131,5 @@ want to contribute to the development on Nova then our [GitHub is this way][6]!
 [2]: ./internals-of-nova-part-2
 [3]: ./taking-out-the-trash
 [4]: ./data-oriented-view
-[5]: https://discord.gg/RTrgJzXKUM
+[5]: https://discord.gg/bwY4TRB8J7
 [6]: https://github.com/trynova/nova

@@ -115,5 +115,5 @@ is found to be a failure.
 
 Only time and work will tell. If you want to get involved, head over into
 [our GitHub repo](https://github.com/trynova/nova), jump on
-[our Discord](https://discord.gg/RTrgJzXKUM), or get in touch otherwise and
+[our Discord](https://discord.gg/bwY4TRB8J7), or get in touch otherwise and
 start hacking away. We're looking forward to meeting you!

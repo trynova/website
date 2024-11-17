@@ -16,7 +16,7 @@ export function Footer() {
         <a aria-label="GitHub" href="https://github.com/trynova/nova">
           <GithubIcon />
         </a>
-        <a aria-label="Discord" href="https://discord.gg/RTrgJzXKUM">
+        <a aria-label="Discord" href="https://discord.gg/bwY4TRB8J7">
           <DiscordIcon />
         </a>
       </section>
