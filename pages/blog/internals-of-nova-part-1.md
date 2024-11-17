@@ -7,7 +7,7 @@ authors:
     url: https://github.com/aapoalas
 ---
 
-In the [Why build a JavaScript engine?](./why-build-a-js-engine.md) blog post I
+In the [Why build a JavaScript engine?](./why-build-a-js-engine) blog post I
 mentioned that "we do have an idea, a new spin on the ECMAScript specification."
 It is time to talk about that idea, or actually the first idea of many. This is
 the idea of the "backing object".
