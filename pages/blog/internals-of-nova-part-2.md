@@ -7,12 +7,12 @@ authors:
     url: https://github.com/aapoalas
 ---
 
-[Last time](./internals-of-nova-part-1) I talked about how non-ordinary
-objects in Nova delegate their object features to a "backing object". This
-allows JavaScript's "exotic objects" to focus on their core features and avoid
-getting bogged down in the details of JavaScript object-hood. This saves us some
-memory on every exotic object, but there is nothing particularly amazing about
-this trick. Any old engine could do the same thing and reap the same benefits.
+[Last time](./internals-of-nova-part-1) I talked about how non-ordinary objects
+in Nova delegate their object features to a "backing object". This allows
+JavaScript's "exotic objects" to focus on their core features and avoid getting
+bogged down in the details of JavaScript object-hood. This saves us some memory
+on every exotic object, but there is nothing particularly amazing about this
+trick. Any old engine could do the same thing and reap the same benefits.
 
 This time I will delve into the foremost idea behind Nova's heap structure, and
 the thing that really sets Nova apart from a traditional engine design. This
