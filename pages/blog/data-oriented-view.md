@@ -171,7 +171,7 @@ then the following points will usually be true:
 
 So, here's a thing we could do: We could opt to never store the `byte_offset`
 and `byte_length` fields in our `DataViewHeapData` struct. Only if those have
-non-default values will we'll store them in the side-tables. When we access a
+non-default values will we store them in the side-tables. When we access a
 `DataView`'s data, we'll then have to check if those side-tables contain data
 for us: The optimal case is that the tables turn out to be entirely empty in
 which case we do not even need to perform a hashing of our `DataView`, or look
