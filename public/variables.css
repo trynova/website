@@ -3,7 +3,6 @@
 @import url("fonts/pt-mono/font.css");
 
 :root {
-  color-scheme: light dark;
   --font-sans: "PT Sans", sans-serif;
   --font-serif: "PT Serif", serif;
   --font-mono: "PT Mono", monospace;

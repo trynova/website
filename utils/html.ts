@@ -60,6 +60,7 @@ export function html(body: string, options: HTMLOptions) {
       .map(({ code }) => code)
       .join("\n")
   }</style>
+        <meta name="color-scheme" content="light dark">
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://trynova.dev/" />
         <meta property="og:title" content="${options.title}" />
