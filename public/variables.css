@@ -13,7 +13,7 @@
   --neutral-200: light-dark(#dcdcdc, #464646);
   --neutral-300: light-dark(#bdbdbd, #525252);
   --neutral-400: light-dark(#989898, #656565);
-  --neutral-500: #7c7c7c;
+  --neutral-500: light-dark(#7c7c7c, #7c7c7c);
   --neutral-600: light-dark(#656565, #989898);
   --neutral-700: light-dark(#525252, #bdbdbd);
   --neutral-800: light-dark(#464646, #dcdcdc);
