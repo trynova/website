@@ -45,8 +45,6 @@
   }
 
   pre:has(code) {
-    margin-left: 1rem;
-    margin-right: 1rem;
     outline: 1rem solid var(--neutral-100);
     background-color: var(--neutral-100);
     overflow: auto;
