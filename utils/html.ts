@@ -46,6 +46,7 @@ export function html(body: string, options: HTMLOptions) {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="${BASE_PATH}/index.css" />
+        <link rel="manifest" href="${BASE_PATH}/manifest.json" />
         <link rel="icon" href="${BASE_PATH}/favicon.svg" sizes="any" type="image/svg+xml">\
         ${
     options.canonical
@@ -60,6 +61,7 @@ export function html(body: string, options: HTMLOptions) {
       .map(({ code }) => code)
       .join("\n")
   }</style>
+        <meta name="color-scheme" content="light dark">
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://trynova.dev/" />
         <meta property="og:title" content="${options.title}" />

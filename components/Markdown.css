@@ -47,6 +47,6 @@
   pre:has(code) {
     outline: 1rem solid var(--neutral-100);
     background-color: var(--neutral-100);
-    overflow: scroll;
+    overflow: auto;
   }
 }

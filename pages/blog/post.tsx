@@ -5,9 +5,9 @@ import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
-import { BlogPost } from "components/BlogPost.tsx";
+import { BlogPost, type BlogPostProps } from "components/BlogPost.tsx";
 
-import { BlogPostProps, posts } from "./utils.ts";
+import { posts } from "./utils.ts";
 
 function Post(props: BlogPostProps) {
   return (
