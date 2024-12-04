@@ -13,9 +13,10 @@ export function BlogPreviewList() {
     <ul class={classes.list}>
       {allPosts.slice(0, 5).map((post) => (
         <div class={classes.post}>
-          <a href={href(post.file)} class={classes.link}>{post.meta.title}</a> -
-          {" "}
-          {post.meta.date.toString()}
+          <a href={href(post.file)}>{post.meta.title}</a>
+          <time datetime={post.meta.date.toString()} class={classes.meta}>
+            {post.meta.date.toLocaleString("sv-SE")}
+          </time>
         </div>
       ))}
     </ul>

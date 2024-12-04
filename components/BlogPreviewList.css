@@ -6,10 +6,9 @@
   margin-top: 1rem;
 }
 
-.link {
+.meta {
+  display: block;
+  font-size: 0.9rem;
   color: var(--neutral-800);
-}
-
-.post {
-  color: var(--neutral-600);
+  white-space: pre-wrap;
 }
