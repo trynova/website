@@ -3,6 +3,7 @@ import { css } from "utils/css.ts";
 import { CopyLeft } from "components/CopyLeft.tsx";
 import { GithubIcon } from "components/icons/Github.tsx";
 import { DiscordIcon } from "components/icons/Discord.tsx";
+import { BlueSkyIcon } from "components/icons/BlueSky.tsx";
 
 const classes = await css(import.meta.resolve("./Footer.css"));
 
@@ -18,6 +19,9 @@ export function Footer() {
         </a>
         <a aria-label="Discord" href="https://discord.gg/bwY4TRB8J7">
           <DiscordIcon />
+        </a>
+        <a aria-label="BlueSkye" href="https://bsky.app/profile/trynova.dev">
+          <BlueSkyIcon />
         </a>
       </section>
     </footer>

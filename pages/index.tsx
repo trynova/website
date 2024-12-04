@@ -5,6 +5,7 @@ import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
+import { BlogPreviewList } from "../components/BlogPreviewList.tsx";
 import type { Metrics } from "./test262.tsx";
 
 const metrics = (await (
@@ -42,6 +43,10 @@ function Index() {
         <a href="https://discord.gg/bwY4TRB8J7">Discord server</a>{" "}
         where the core team resides and where we discuss development.
       </p>
+      <section>
+        <h1>Latest Blog Posts</h1>
+        <BlogPreviewList />
+      </section>
     </Layout>
   );
 }

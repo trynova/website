@@ -1,0 +1,15 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.link {
+  color: var(--neutral-800);
+}
+
+.post {
+  color: var(--neutral-600);
+}

@@ -1,5 +1,5 @@
 import { css } from "utils/css.ts";
-import { BlogPostProps } from "../pages/blog/utils.ts";
+import type { BlogPostProps } from "components/BlogPost.tsx";
 import { href } from "utils/path.ts";
 
 const classes = await css(import.meta.resolve("./BlogPostCard.css"));
