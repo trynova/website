@@ -20,7 +20,7 @@ export function Footer() {
         <a aria-label="Discord" href="https://discord.gg/bwY4TRB8J7">
           <DiscordIcon />
         </a>
-        <a aria-label="BlueSkye" href="https://bsky.app/profile/trynova.dev">
+        <a aria-label="Bluesky" href="https://bsky.app/profile/trynova.dev">
           <BlueSkyIcon />
         </a>
       </section>
