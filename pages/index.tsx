@@ -5,7 +5,7 @@ import { href, output } from "utils/path.ts";
 import { write } from "utils/fs.ts";
 
 import { Layout } from "components/Layout.tsx";
-import { BlogPreviewList } from "../components/BlogPreviewList.tsx";
+import { BlogPreviewList } from "components/BlogPreviewList.tsx";
 import type { Metrics } from "./test262.tsx";
 
 const metrics = (await (
