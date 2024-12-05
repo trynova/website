@@ -44,7 +44,7 @@ function Index() {
         where the core team resides and where we discuss development.
       </p>
       <section>
-        <h1>Latest Blog Posts</h1>
+        <h2>Latest Blog Posts</h2>
         <BlogPreviewList />
       </section>
     </Layout>
