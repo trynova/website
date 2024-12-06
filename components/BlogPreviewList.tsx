@@ -10,7 +10,7 @@ const allPosts = (await Array.fromAsync(posts()))
 
 export function BlogPreviewList() {
   return (
-    <li class={classes.list}>
+    <ul class={classes.list}>
       {allPosts.slice(0, 5).map((post) => (
         <li class={classes.post}>
           <a href={href(post.file)}>{post.meta.title}</a>
@@ -22,6 +22,6 @@ export function BlogPreviewList() {
       <a href="/blog">
         View all posts
       </a>
-    </li>
+    </ul>
   );
 }
