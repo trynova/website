@@ -10,18 +10,18 @@ const allPosts = (await Array.fromAsync(posts()))
 
 export function BlogPreviewList() {
   return (
-    <li class={classes.list}>
+    <ul class={classes.list}>
       {allPosts.slice(0, 5).map((post) => (
-        <div class={classes.post}>
+        <li class={classes.post}>
           <a href={href(post.file)}>{post.meta.title}</a>
           <time datetime={post.meta.date.toString()} class={classes.meta}>
             {post.meta.date.toLocaleString("sv-SE")}
           </time>
-        </div>
+        </li>
       ))}
       <a href="/blog">
         View all posts
       </a>
-    </li>
+    </ul>
   );
 }

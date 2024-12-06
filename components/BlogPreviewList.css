@@ -4,6 +4,9 @@
   gap: 1rem;
   padding: 0;
   margin-top: 1rem;
+}
+
+.post {
   list-style: none;
 }
 
