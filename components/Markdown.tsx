@@ -12,11 +12,16 @@ import "prismjs/components/prism-rust.min.js";
 import { css } from "utils/css.ts";
 import clsx from "clsx";
 
+
 const marked = new Marked(markedHighlight({
   emptyLangClass: "language-none",
   langPrefix: "language-",
   highlight(code, lang, _info) {
-    lang = lang === "rs" ? "rust" : lang === "console" ? "sh" : lang;
+    const languageAliases: Record<string, string> = {
+      rs: "rust",
+      console: "sh"
+    };
+    lang = languageAliases[lang] ?? lang;
     const language = Prism.languages[lang] ?? Prism.languages.autoit;
     return Prism.highlight(code, language, lang);
   },

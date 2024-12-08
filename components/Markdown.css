@@ -40,13 +40,13 @@
   }
 
   p > code {
-    background-color: var(--neutral-100);
-    outline: 0.15em solid var(--neutral-100);
+    background-color: var(--neutral-50);
+    outline: 0.15em solid var(--neutral-50);
   }
 
   pre:has(code) {
-    outline: 1rem solid var(--neutral-100);
-    background-color: var(--neutral-100);
+    outline: 1rem solid var(--neutral-50);
+    background-color: var(--neutral-50);
     overflow: auto;
   }
 }
