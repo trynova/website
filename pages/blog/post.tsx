@@ -26,6 +26,7 @@ if (import.meta.main) {
         description: post.meta.description,
         author: post.meta.authors.map((author) => author.name).join(", "),
         canonical: href(post.file),
+        highlight: true,
       }),
     );
   }

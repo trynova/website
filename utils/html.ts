@@ -30,6 +30,11 @@ export interface HTMLOptions {
    * The canonical URL of the HTML document.
    */
   canonical?: string;
+
+  /**
+   * Whether to highlight code blocks in the HTML document.
+   */
+  highlight?: boolean;
 }
 
 /**
@@ -51,6 +56,12 @@ export function html(body: string, options: HTMLOptions) {
         ${
     options.canonical
       ? `<link rel="canonical" href="${absoluteHref(options.canonical)}">\n`
+      : ""
+  }
+  ${
+    options.highlight
+      ? `<link rel="stylesheet" href="${BASE_PATH}/prism.css" />\n
+       `
       : ""
   }
         <link rel="alternate" type="application/rss+xml" href="${BASE_PATH}/blog/feed.rss" title="Nova Blog (RSS)">
