@@ -40,20 +40,6 @@
   --chart-timeout: #d9a620;
   --chart-unresolved: #d9a620;
 
-  --syntax-comment: var(--neutral-300);
-  --syntax-punctuation: var(--neutral-800);
-  --syntax-keyword: var(--neutral-500);
-  --syntax-class: var(--neutral-700);
-  --syntax-boolean: var(--neutral-500);
-  --syntax-symbol: var(--neutral-700);
-  --syntax-number: var(--neutral-800);
-  --syntax-string: var(--neutral-400);
-  --syntax-variable: var(--neutral-500);
-  --syntax-operator: var(--neutral-900);
-  --syntax-function: var(--neutral-900);
-  --syntax-background: var(--neutral-50);
-  --syntax-text: var(--neutral-900);
-
   --selection-color: light-dark(var(--neutral-950), #727073);
 
   --scrollbar-track-color: var(--neutral-0);
