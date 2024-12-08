@@ -1,11 +1,11 @@
 .markdown {
   word-wrap: break-word;
 
-  > *:first-child {
+  >*:first-child {
     margin-top: 0 !important;
   }
 
-  > *:last-child {
+  >*:last-child {
     margin-bottom: 0 !important;
   }
 
@@ -39,7 +39,7 @@
     margin-left: 2rem;
   }
 
-  p > code {
+  p>code {
     background-color: var(--neutral-50);
     outline: 0.15em solid var(--neutral-50);
   }
@@ -48,5 +48,37 @@
     outline: 1rem solid var(--neutral-50);
     background-color: var(--neutral-50);
     overflow: auto;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-button:start:decrement,
+  ::-webkit-scrollbar-button:end:increment {
+    display: block;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-button:vertical:increment {
+    background-color: var(--neutral-400);
+  }
+
+  ::-webkit-scrollbar-track-piece {
+    background-color: var(--neutral-400);
+    -webkit-border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:vertical {
+    height: 50px;
+    background-color: var(--neutral-400);
+    -webkit-border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal {
+    width: 50px;
+    background-color: var(--neutral-400);
+    -webkit-border-radius: 3px;
   }
 }
