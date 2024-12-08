@@ -1,11 +1,11 @@
 .markdown {
   word-wrap: break-word;
 
-  >*:first-child {
+  > *:first-child {
     margin-top: 0 !important;
   }
 
-  >*:last-child {
+  > *:last-child {
     margin-bottom: 0 !important;
   }
 
@@ -39,7 +39,7 @@
     margin-left: 2rem;
   }
 
-  p>code {
+  p > code {
     background-color: light-dark(hsl(230, 1%, 98%), hsl(220, 13%, 18%));
     outline: 0.15em solid light-dark(hsl(230, 1%, 98%), hsl(220, 13%, 18%));
   }
