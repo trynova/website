@@ -2,7 +2,7 @@
  * One Dark theme & One Light theme for prism.js stolen and meddled with for this site
  * Based on Atom's One Dark theme: https://github.com/atom/atom/tree/master/packages/one-dark-syntax
  */
-*/ code[class*="language-"],
+code[class*="language-"],
 pre[class*="language-"] {
   background: light-dark(hsl(230, 1%, 98%), hsl(220, 13%, 18%));
   color: light-dark(hsl(230, 8%, 24%), hsl(220, 14%, 71%));
