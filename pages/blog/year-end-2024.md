@@ -1,6 +1,6 @@
 ---
-title: 2024 - Looking backwards and fowards
-description: On foward and lateral progress.
+title: 2024 - Looking backwards and forwards
+description: On forward and lateral progress.
 date: 2024-12-30
 authors:
   - name: Aapo Alasuutari
@@ -39,7 +39,7 @@ to resemble a real engine that could run some basic JavaScript scripts.
 In June, I gave another talk on Nova at Web Engines Hackfest. The talk and
 Hackfest in general was a great experience: I got to meet with many people much
 more experienced in JavaScript engines than myself, and made a lot of contacts
-that I hope to one day have the priviledge of calling friends. The talk was also
+that I hope to one day have the privilege of calling friends. The talk was also
 well-enough received that I was invited to give it anew at the TC39 meeting in
 Helsinki later that month. That lead to meeting again more engine developers
 with whom I've exchanged quite a bit of words since.
