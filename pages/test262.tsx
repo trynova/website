@@ -120,6 +120,23 @@ function Test262() {
               grid: {
                 color: "var(--neutral-400)",
               },
+              position: "left",
+            },
+            y2: {
+              stacked: true,
+              min: 0,
+              max: 100,
+              ticks: {
+                color: "var(--neutral-800)",
+                font: {
+                  family: "var(--font-mono)",
+                  size: 10,
+                },
+              },
+              grid: {
+                color: "var(--neutral-400)",
+              },
+              position: "right",
             },
           },
         }}
