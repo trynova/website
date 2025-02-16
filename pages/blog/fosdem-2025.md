@@ -1,7 +1,7 @@
 ---
 title: FOSDEM 2025
 description: Reviewing two talks on or around Nova JavaScript engine.
-date: 2025-09-02
+date: 2025-02-16
 authors:
   - name: Aapo Alasuutari
     url: https://github.com/aapoalas
