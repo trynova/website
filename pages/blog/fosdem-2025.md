@@ -16,7 +16,7 @@ safepoints, and one talk on memory optimizations in JavaScript based on
 data-oriented design. Here are my thoughts on the talks, and FOSDEM in general.
 I will also use this platform to answer questions I received in more detail.
 
-## [Abusing reborrowing - On Nova's garbage collector safepoints](https://fosdem.org/2025/schedule/event/fosdem-2025-4391-how-to-lose-weight-optimising-memory-usage-in-javascript-and-beyond/)
+## [Abusing reborrowing - On Nova's garbage collector safepoints](https://fosdem.org/2025/schedule/event/fosdem-2025-4394-abusing-reborrowing-for-fun-profit-and-a-safepoint-garbage-collector/)
 
 Nova's garbage collector is still not an interleaved one, ie. currently garbage
 collection can only happen when JavaScript is not being executed. I am actively
