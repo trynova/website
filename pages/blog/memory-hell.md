@@ -267,7 +267,7 @@ storage size we choose). Having the type be defined by the value itself instead
 of the heap data means that polymorphism can be resolved already at the initial
 call site before any memory reads need to be performed, and subsequent work can
 run monomorphic. It also means, sort of confusingly, that type confusion is no
-longer a thing: We'll come to this a bit later. Finally, because we the array
+longer a thing: We'll come to this a bit later. Finally, because the array
 being indexed is dependent on the type, we can even decide that a single type
 indexes multiple (equally long) arrays: We can use Struct-of-Arrays to store the
 data in the heap.
