@@ -1,6 +1,6 @@
 ---
 title: Memory hell
-description: On the theoretical basis of garbage collection and memory ownership.
+description: On the philosophical basis of garbage collection and memory ownership.
 date: 2025-02-23
 authors:
   - name: Aapo Alasuutari
