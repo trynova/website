@@ -127,7 +127,7 @@ Yet, there is light at the end of the tunnel! And it's _not_ Rust! (We'll get to
 Rust later.) The V8 engine has an optional system called "pointer compression"
 which effectively takes our object pointer and chops off the top 32 bits. To
 re-construct the object pointer we need only take the engine's "base pointer"
-which is guaranteed to have 32 trailing zeroes, and perform a bitwise AND on the
+which is guaranteed to have 32 trailing zeroes, and perform a bitwise OR on the
 base pointer and our compressed object pointer, zero-extended to 64 bits. (There
 are some extra things but this is the basic system.) With this, accessing object
 data always requires both the object "pointer" and the engine base pointer. This
@@ -267,10 +267,10 @@ storage size we choose). Having the type be defined by the value itself instead
 of the heap data means that polymorphism can be resolved already at the initial
 call site before any memory reads need to be performed, and subsequent work can
 run monomorphic. It also means, sort of confusingly, that type confusion is no
-longer a thing: We'll come to this a bit later. Finally, because the array
-being indexed is dependent on the type, we can even decide that a single type
-indexes multiple (equally long) arrays: We can use Struct-of-Arrays to store the
-data in the heap.
+longer a thing: We'll come to this a bit later. Finally, because the array being
+indexed is dependent on the type, we can even decide that a single type indexes
+multiple (equally long) arrays: We can use Struct-of-Arrays to store the data in
+the heap.
 
 ### So, who owns that memory? What happens if the engine shuts down?
 
