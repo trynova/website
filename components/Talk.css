@@ -4,6 +4,10 @@
   gap: 0.5rem;
 }
 
+.talk:not(:last-child) {
+  margin-bottom: 2rem;
+}
+
 .video {
   aspect-ratio: 16/9;
   block-size: auto;
