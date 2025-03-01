@@ -18,8 +18,10 @@
     "fresh_charts": "https://deno.land/x/fresh_charts@0.3.1/mod.ts",
     "lightningcss": "npm:lightningcss@^1.27.0",
     "marked": "npm:marked@^14.1.2",
+    "marked-highlight": "npm:marked-highlight@2.2.1",
     "octokit": "npm:octokit@4.0.2",
     "preact": "npm:preact@^10.24.0",
+    "prismjs": "npm:prismjs@^1.29.0",
     "preact-render-to-string": "npm:preact-render-to-string@^6.5.11",
     "utils/": "./utils/"
   },
