@@ -12,6 +12,27 @@ function Talks() {
     <Layout>
       <h1>Talks</h1>
       <Talk
+        title="Abusing reborrowing for fun, profit, and a safepoint garbage collector"
+        description={"Focuses on the technical challenges and solutions that lead to Nova's safepoint garbage collector design. The final design mildly abuses Rust's \"reborrowing\" functionality to make the borrow checker not only understand Nova's garbage collector but cooperate with making sure it is used in the correct way."}
+        speaker={{
+          name: "Aapo Alasuutari",
+          url: "https://github.com/aapoalas",
+        }}
+        event={{
+          name: "FOSDEM 2025",
+          url: "https://fosdem.org/2025/",
+        }}
+        slides={[
+          {
+            name: "Slides",
+            url:
+              "https://fosdem.org/2025/events/attachments/fosdem-2025-4394-abusing-reborrowing-for-fun-profit-and-a-safepoint-garbage-collector/slides/237982/Abusing_r_4Y4h70i.pdf",
+          },
+        ]}
+        videoUrl="https://video.fosdem.org/2025/ub2252a/fosdem-2025-4394-abusing-reborrowing-for-fun-profit-and-a-safepoint-garbage-collector.av1.webm"
+        date={Temporal.PlainDate.from("2025-02-15")}
+      />
+      <Talk
         title="Nova Engine - Building a DOD JS Engine in Rust"
         description="Focuses on how JavaScript engines work in general, and what sort of design choices Nova makes in this context."
         speaker={{
