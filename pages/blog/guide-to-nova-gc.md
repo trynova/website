@@ -286,4 +286,7 @@ println!("{:?} {:?}", first, second);
 This will not compile. The error will say that `gc` is borrowed as exclusive at
 the first `gc.reborrow()` call site, is then again borrowed as exclusive at the
 second `gc.reborrow()` call site, and the first exclusive borrow is later reused
-on at the print line. This is
+on at the print line. This is our first useful error from out bound values:
+
+Both the calls to `silly_example` can trigger garbage collection. If the second
+call does trigger garbage collection, then the `first` `Value` will be use-after-free.
