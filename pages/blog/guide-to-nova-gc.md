@@ -289,4 +289,74 @@ second `gc.reborrow()` call site, and the first exclusive borrow is later reused
 on at the print line. This is our first useful error from out bound values:
 
 Both the calls to `silly_example` can trigger garbage collection. If the second
-call does trigger garbage collection, then the `first` `Value` will be use-after-free.
+call does trigger garbage collection, then the `first` `Value` will be
+use-after-free. The compile error here is absolutely on point: This is an error.
+
+But okay, what if we were calling `Value::from_string` instead?
+
+```rust
+let first: Value<'_> = silly_example(agent, gc.reborrow());
+let second: Value<'_> = Value::from_string(agent, "foo".into(), gc.nogc());
+println!("{:?} {:?}", first, second);
+```
+
+This still will not compile! The error message says that `gc.reborrow()` borrows
+`gc` as exclusive, and `gc.nogc()` then borrows it as shared but the exclusive
+borrow is then reused when `first` is printed. From a garbage collector
+perspective this makes no sense: The `first` `Value` returned from
+`silly_example` will not be invalidated by a `Value::from_string` call, so why
+is this happening?
+
+The reason is buried deep into Rust's internal mutation types, and we'll skip
+why it is so: We'll just accept that it needs to be this way for a good reason
+and we'll live with it. But, it _is_ a problem for us: Putting this into problem
+into garbage collector terms, what Rust here is telling us is that while `first`
+lives, garbage collection is still happening and trying to access the `GcScope`
+at the same time would be equivalent to allowing two garbage collections to
+happen at the same time. That sounds dangerous and it makes sense we're stopped
+from doing that, but we know that wouldn't be the case: Garbage collection has
+potentially started and finished inside the `silly_example` call if it did.
+
+A `Value` is just a handle, an integer of some kind that the `Agent` can use to
+find the associated heap data, and importantly the `Agent` does not trust a
+`Value` to contain correct data: All heap data access is always checked. Hence,
+we can extract the integer data from a `Value` and wrap it into a new `Value`
+with a different lifetime without sacrificing memory safety. Now, the perfect
+thing would be if we could simply call `bind(gc.nogc())` on our `first`, but
+this will not compile because `first` keeps `gc` inactive. What we need to do is
+add an `unbind` call first:
+
+```rust
+let first: Value<'_> = silly_example(agent, gc.reborrow())
+    .unbind()
+    .bind(gc.nogc());
+```
+
+This will now compile, despite looking a little ugly. (Maybe more than a
+little.) The `unbind` call releases the `gc` from the `gc.reborrow()`'s
+temporary exclusive borrow, after which we can immediately call
+`bind(gc.nogc())` on it to bind it back to the `GcScope` but this time with a
+shared borrow backing it.
+
+This is our first problem and solution: When returning a strongly bound value,
+`GcScope` will remain inactive. To fix this, chain `.unbind().bind(gc.nogc())`
+to the call. Note: There is no runtime cost for doing these calls, though there
+likely is a small compile time cost.
+
+### Passing bound values to `NoGcScope` functions
+
+This is going to be easy: Passing bound values as parameters to `NoGcScope`
+functions works just like you would expect from normal Rust:
+
+```rust
+let first: Value<'_> = Value::from_string(agent, "3".into(), gc.nogc());
+let result = to_number_primitive(agent, first, gc.nogc());
+```
+
+Because the `first` value isn't invalidated by the `gc.nogc()` call, passing it
+into the call is perfectly okay from Rust's perspective.
+
+### Passing bound values to `GcScope` functions
+
+This is not going to be quite so easy, but you probably guessed that already.
+When `gc.reborrow()` is called, all bound values are invalidated immediately.
