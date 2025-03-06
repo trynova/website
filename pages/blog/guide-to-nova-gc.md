@@ -157,7 +157,7 @@ trigger garbage collection. Due to certain details of Rust's borrow checker
 rules related to internal mutation, the returned value will keep the `GcScope`
 from being reused. We'll see how to deal with this situation later.
 
-## The pratice
+## The practice
 
 Now that we have seen the `GcScope`, `NoGcScope`, and bound values, we are ready
 to start using them in practice. First, let's do a quick review of these three
@@ -170,7 +170,7 @@ principal actors:
    cannot trigger garbage collection. Any number of such types can be active at
    the same time, but no `GcScope` can be active at the same time.
 3. Bound values: Handles to garbage collected values that have been bound to a
-   `NoGcScope` or `GcScope`, implicity or explicitly.
+   `NoGcScope` or `GcScope`, implicitly or explicitly.
 
 With this, we're ready to start our praxis.
 
@@ -278,8 +278,8 @@ It is time to look at the issue I've been mentioning above. Let us call our
 `silly_example` from above twice and try to print the two results:
 
 ```rs
-let first: Value<'_> = silly_example(agent, gc.reborrow());
-let second: Value<'_> = silly_example(agent, gc.reborrow());
+let first = silly_example(agent, gc.reborrow());
+let second = silly_example(agent, gc.reborrow());
 println!("{:?} {:?}", first, second);
 ```
 
@@ -295,8 +295,8 @@ use-after-free. The compile error here is absolutely on point: This is an error.
 But okay, what if we were calling `Value::from_string` instead?
 
 ```rust
-let first: Value<'_> = silly_example(agent, gc.reborrow());
-let second: Value<'_> = Value::from_string(agent, "foo".into(), gc.nogc());
+let first = silly_example(agent, gc.reborrow());
+let second = Value::from_string(agent, "foo".into(), gc.nogc());
 println!("{:?} {:?}", first, second);
 ```
 
@@ -327,7 +327,7 @@ this will not compile because `first` keeps `gc` inactive. What we need to do is
 add an `unbind` call first:
 
 ```rust
-let first: Value<'_> = silly_example(agent, gc.reborrow())
+let first = silly_example(agent, gc.reborrow())
     .unbind()
     .bind(gc.nogc());
 ```
@@ -349,7 +349,7 @@ This is going to be easy: Passing bound values as parameters to `NoGcScope`
 functions works just like you would expect from normal Rust:
 
 ```rust
-let first: Value<'_> = Value::from_string(agent, "3".into(), gc.nogc());
+let first = Value::from_string(agent, "3".into(), gc.nogc());
 let result = to_number_primitive(agent, first, gc.nogc());
 ```
 
@@ -359,4 +359,197 @@ into the call is perfectly okay from Rust's perspective.
 ### Passing bound values to `GcScope` functions
 
 This is not going to be quite so easy, but you probably guessed that already.
-When `gc.reborrow()` is called, all bound values are invalidated immediately.
+When `gc.reborrow()` is called, all bound values are invalidated immediately and
+trying to use them afterwards becomes an error:
+
+```rust
+let first = silly_example(agent, gc.reborrow()).unbind().bind(gc.nogc());
+let child_gc = gc.reborrow(); // <-- Conceptually, Rust thinks garbage collection happens here.
+let result = to_number(agent, first, child_gc); // Error: `first` is now use-after-free!
+```
+
+Even if we call the `gc.reborrow()` "within" the `to_number` call, the `first`
+value will become invalidated "after-the-fact" and the call itself now becomes
+invalid:
+
+```rust
+let first = silly_example(agent, gc.reborrow()).unbind().bind(gc.nogc());
+let result = to_number(agent, first, gc.reborrow()); // Error! Trying to pass exclusive and shared reference together.
+```
+
+This is again an aliasing error and the borrow checker will not stand for this.
+So, what do we do? Conceptually, we again know that calling `gc.reborrow()`
+doesn't trigger garbage collection but something inside `to_number` may do so.
+Hence, passing `first` as a parameter is perfectly legal here, especially since
+it (again) does not put memory safety at risk. So, we can use the `unbind`
+method to release `first` from the `GcScope` borrow before it is passed to the
+method:
+
+```rust
+let first = silly_example(agent, gc.reborrow()).unbind().bind(gc.nogc());
+let result = to_number(agent, first.unbind(), gc.reborrow()); // No error.
+```
+
+This is our second problem and solution: When calling a method that takes
+`GcScope`, we cannot pass bound values into that same call. To fix this, we must
+call `.unbind()` on the parameter bound values. To be safe, this should only be
+done at the call site and not before. The following would be _incorrect_:
+
+```rust
+// *Incorrect* usage!
+let first = silly_example(agent, gc.reborrow()).unbind().bind(gc.nogc());
+let result = to_number(agent, first, gc.reborrow()); // No error.
+let other_result = to_number(agent, first, gc.reborrow()); // Uh oh, no error! `first` is now use-after-free!
+```
+
+This is also the reason why `GcScope` is always the last argument.
+
+### Taking bound values as parameters in `NoGcScope` functions
+
+There is nothing particularly complicated here, again. These functions work in
+all ways very much like normal Rust functions:
+
+```rust
+fn my_method(
+    agent: &mut Agent,
+    value: Value,
+    gc: NoGcScope
+) {
+    // ... do your thing ...
+}
+```
+
+Because no garbage collection can happen within this function scope, the `value`
+is guaranteed to stay valid until the end of the call.
+
+### Taking bound values as parameters in `GcScope` functions
+
+Once again, functions that may trigger garbage collection are the problem child.
+When we receive a parameter `value: Value` in a call, by normal Rust lifetime
+rules the `Value<'_>`'s contained lifetime is guaranteed to be valid until the
+end of this call. In our case, we do not want that to be the case; the lifetime
+should be bound to the `GcScope` but there is no way to make Rust perform this
+binding automatically. We must thus perform it manually: You can think of this
+as the mirror of the `.unbind()` call we needed to perform when calling a
+`GcScope` function earlier.
+
+```rust
+fn my_method(
+    agent: &mut Agent,
+    value: Value,
+    gc: GcScope
+) {
+    let value = value.bind(gc.nogc());
+    // ... do your thing ...
+}
+```
+
+All bindable values should be bound in this way at the beginning of every
+function that takes `GcScope`: This is the _most_ important thing in Nova's
+garbage collector by far. If this rule is not upheld, then getting
+use-after-free in the engine is trivial or even guaranteed. If this rule is
+upheld, then getting any further use-after-free becomes nearly impossible.
+
+Luckily, this is fairly easy conceptually: You need only to bind your parameters
+and you're good to go. Unfortunately, we know that "just doing the right thing"
+is not quite that easy (see null pointer checks). For that reason, we plan on
+implementing a custom lint to check this at build time.
+
+## The mastery
+
+Okay, now we know how to work with bindable values at function interfaces. All
+that remains is the all important question of "how do I actually use these
+things?!" True mastery can only come from practice, from trying and failing, and
+trying again until the tools break in your hands. I've never known how to create
+masters, but I've seen the tools break in my hands a few times by now, so I can
+hopefully give you a few tricks.
+
+These will be in no particular order, snippets of code that pose challenges and
+the answers therein.
+
+### Short-circuit returning bound values from `GcScope` functions
+
+If your function calls a function and immediately returns the result, you'll
+find that using `gc.reborrow()` or `gc.nogc()` will not work.
+
+```rust
+fn my_method<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    to_number(agent, some_value, gc.reborrow()) // Error: Returning value bound to local variable.
+}
+
+fn my_method_2<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    Value::from_string(agent, "foo".into(), gc.nogc()) // Error: Returning value bound to local variable.
+}
+```
+
+The reason for this is that our `gc.reborrow()` and `gc.nogc()` are not "true
+reborrows", their contained `'a` lifetime is always guaranteed to be shorter
+than the source `GcScope<'a, '_>` is, but our return type requires the lifetime
+to be equal to `'a`. (This isn't exactly the reason, actually, but it's
+technically the same thing. The real reason is the temporary borrow. Whatever.
+Deal with it.)
+
+There are two ways to fix this. The first, preferred one, is to consume the
+`GcScope` variable to get an equal `'a` lifetime. This can be done by passing
+the `gc` directly (for `GcScope` functions) or by using the `gc.into_nogc()`
+method:
+
+```rust
+fn my_method<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    to_number(agent, some_value, gc) // No error
+}
+
+fn my_method_2<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    Value::from_string(agent, "foo".into(), gc.into_nogc()) // No error
+}
+```
+
+Note that both of these actions invalidate all bound values; for the
+`gc.into_nogc()` method this is quite unfortunate as we actually know that it
+signifies the end to all possibility of garbage collector triggering in this
+call, and that henceforth all bound values are strictly guaranteed to stay valid
+until the end of the call. If you are passing bound values into the call
+together with the result of `gc.into_nogc()` then you can use `.unbind()` on the
+parameters at the call site the same way as you'd normally use for a
+`gc.reborrow()` call.
+
+The second way to handle this issue is by simply calling `.unbind()` at the
+return site: This is likewise perfectly fine, and perfectly safe. Especially if
+you are passing bound values into a `NoGcScope` call and returning the result
+then this may sometimes be the cleaner option:
+
+```rust
+fn my_method<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    to_number(agent, some_value, gc.reborrow())
+        .unbind() // No error
+}
+
+fn my_method_2<'a>(
+    agent: &mut Agent,
+    gc: GcScope<'a, '_>
+) -> Value<'a> {
+    // ...
+    Value::from_string(agent, "foo".into(), gc.nogc())
+        .unbind() // No error
+}
+```
