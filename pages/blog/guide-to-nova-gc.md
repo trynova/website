@@ -48,7 +48,7 @@ let value: Value<'_> = OrdinaryObject::create_empty_object(agent).into_value();
 // Garbage collector runs; it does not see any references to the object.
 agent.gc();
 // The object has been free'd now, this is use-after-free!
-println!(value.str_repr(agent)
+println!(value.str_repr(agent));
 ```
 
 Nova uses Rust's borrow checker to guard against this kind of use-after-free
