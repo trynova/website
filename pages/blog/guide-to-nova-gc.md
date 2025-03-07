@@ -16,9 +16,11 @@ engine, as well as how embedders interface with it.
 This is not a trivial system, so this post is intended as a step-by-step
 tutorial into understanding the garbage collector, how it uses the borrow
 checker, how it needs to be handled, and what sort of errors does it give you
-and why.
+and why. If you're interested in contributing to Nova, this will be very useful
+reading. If you're only interested in seeing what the fuss is all about, then
+you might only want to read the first one or two chapters.
 
-## The theory
+## The Theory
 
 Nova uses an exact or precise tracing garbage collector. A tracing garbage
 collector is one where the garbage collector algorithm follows references
@@ -157,7 +159,7 @@ trigger garbage collection. Due to certain details of Rust's borrow checker
 rules related to internal mutation, the returned value will keep the `GcScope`
 from being reused. We'll see how to deal with this situation later.
 
-## The practice
+## The Practice
 
 Now that we have seen the `GcScope`, `NoGcScope`, and bound values, we are ready
 to start using them in practice. First, let's do a quick review of these three
@@ -455,17 +457,129 @@ and you're good to go. Unfortunately, we know that "just doing the right thing"
 is not quite that easy (see null pointer checks). For that reason, we plan on
 implementing a custom lint to check this at build time.
 
-## The mastery
+### Holding bindable values across `GcScope` function calls
 
-Okay, now we know how to work with bindable values at function interfaces. All
-that remains is the all important question of "how do I actually use these
-things?!" True mastery can only come from practice, from trying and failing, and
-trying again until the tools break in your hands. I've never known how to create
-masters, but I've seen the tools break in my hands a few times by now, so I can
-hopefully give you a few tricks.
+One final, important thing is left to discuss: We've seen how bindable values
+are formed and passed around, and how they become invalidated whenever a garbage
+collector triggering function call is made. This is great because it makes sure
+that we don't use these values after they may have been moved or free'd. But
+what if we need to use a bound value after a function call? For example, what do
+we do in this sort of situation:
+
+```rust
+fn example(
+    agent: &mut Agent,
+    arg0: Value,
+    arg1: Value,
+    gc: GcScope
+) {
+    let arg0 = arg0.bind(gc.nogc());
+    let arg1 = arg1.bind(gc.nogc());
+
+    let start_index = to_length_or_infinity(agent, arg0.unbind(), gc.reborrow())?;
+    let end_index = to_length_or_infinity(agent, arg1.unbind(), gc.reborrow())?; // Error: arg1 is use-after-free
+}
+```
+
+This will not compile, and it is a perfectly valid error: if garbage collection
+is triggered by the first `to_length_or_infinity` call, then `arg1`'s data would
+be moved or removed. Continuing to use it would be well and truly mistaken.
+
+But, we cannot just not use `arg1`: we need both `start_index` and `end_index`
+so we need to somehow make sure that `arg1` can be used and stays valid across
+the first `to_length_or_infinity` call. The answer to how to do that is,
+emphatically, _not_ `let arg1 = arg1.unbind();`. That would be a big, big
+mistake as it just makes the code compile but would not work correctly.
+
+What we need to do, instead, is to "scope" or "root" `arg1`. (The terms are
+interchangeable in this context.) What this does is to write the `arg1` `Value`
+onto the `Agent` heap, into a location that `Agent` guarantees will not be
+changed by the garbage collector, and returns a handle to it. This is a second
+level handle, if you will: Our original `Value` is a handle to some data on the
+heap, and rooting it moves that onto the heap and returns a handle. This second
+level handle has a different type, `Scoped` and is defined automatically for all
+bindable, rootable values.
+
+```rust
+trait Scopable: Rootable + Bindable
+where
+    for<'a> Self::Of<'a>: Rootable + Bindable,
+{
+    fn scope<'scope>(
+        self,
+        agent: &mut Agent,
+        gc: NoGcScope<'_, 'scope>,
+    ) -> Scoped<'scope, Self::Of<'static>> {
+        Scoped::new(agent, self.unbind(), gc)
+    }
+}
+```
+
+For our `Value`, this would simplify to the following `scope` function
+implementation:
+
+```rust
+impl Value<'_> {
+    fn scope<'scope>(
+        self,
+        agent: &mut Agent,
+        gc: NoGcScope<'_, 'scope>,
+    ) -> Scoped<'scope, Value<'static>> {
+        Scoped::new(agent, self.unbind(), gc)
+    }
+}
+```
+
+Note that we're now using the second lifetime of the `NoGcScope`, this is the
+"scope" lifetime which works like your usual Rust lifetimes: a type carrying the
+scope lifetime is guaranteed to be valid for the whole function call. From a
+validity standpoint, this is because the `Agent` removes these scope-rooted
+handles from the heap only at outside of user-controlled code. Garbage
+collection does not remove them, so they do not need to be bound to the garbage
+collector lifetime.
+
+Now that we know of scoping, this is how we would use it:
+
+```rust
+fn example(
+    agent: &mut Agent,
+    arg0: Value,
+    arg1: Value,
+    gc: GcScope
+) {
+    let arg0 = arg0.bind(gc.nogc());
+    // We scope the argument value. The resulting scoped value is guaranteed to
+    // be valid until the end of this call.
+    // Note that we could bind and then scope the value, but that would not
+    // make any difference to the resulting code or its correctness.
+    let arg1: Scoped<'_, Value<'static>> = arg1.scope(agent, gc.nogc());
+
+    let start_index = to_length_or_infinity(agent, arg0.unbind(), gc.reborrow())?;
+    // To get our bindable value back out form a scoped value, we can use a get
+    // method on it. This returns a `Value<'static>`, which we can leave
+    // unbound because we're passing it as a parameter immediately.
+    let end_index = to_length_or_infinity(agent, arg1.get(agent), gc.reborrow())?;
+}
+```
+
+With this, we've successfully held `arg1` across a `GcScope` function call,
+ensuring that its data will not be removed by the garbage collector (it will
+still be moved, but on the heap the scoped value's data will be updated to point
+to the new location).
+
+## The Mastery
+
+Now we know how to work with bindable values at function interfaces, and we know
+how to create scoped values and use them to keep bindable values from being
+invalidated by the garbage collector when we need them to stay. All that remains
+is the all important question of "how do I actually use these things?!" True
+mastery can only come from practice, from trying and failing, and trying again
+until the tools break in your hands. I've never known how to create masters, but
+I've seen the tools break in my hands a few times by now, so I can hopefully
+give you a few tricks.
 
 These will be in no particular order, snippets of code that pose challenges and
-the answers therein.
+the answers therein. Koans, if you will.
 
 ### Short-circuit returning bound values from `GcScope` functions
 
@@ -553,3 +667,12 @@ fn my_method_2<'a>(
         .unbind() // No error
 }
 ```
+
+The question is: How to ensure that a bound value lives long enough to be
+returned? The answer is, by consuming the `GcScope`. Or when under duress, by
+unbinding the value at the site of return.
+
+### Splitting a function's tail into a `NoGcScope` part
+
+Oftentimes, functions will call into `GcScope` functions at the start but later
+move to operating purely with `NoGcScope` functions.
