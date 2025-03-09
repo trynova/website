@@ -31,10 +31,15 @@ live items.
 
 The difference between an exact and a conservative garbage collector (which
 traces all possible live items) is, generally, in that a conservative garbage
-collector will look for data that looks like a potential reference to a garbage
-collected item and traces any items it finds this way. An exact garbage
-collector will not search for "potential" references like this, instead it uses
-some compile-time guarantee to only look for items in statically known places.
+collector will look for any sequences of bytes that look like a potential
+reference to a garbage collected item and traces all references found this way:
+It will never mistakenly free any still-referenced data but it may hold onto
+data that isn't actually referenced anymore. An exact garbage collector will not
+search for "potential" references like this, instead it uses some compile-time
+guarantee to only look for items in statically known places: It will never
+mistakenly free still-referenced data (assuming that all references are properly
+located in the statically known places) and it will always free all unreferenced
+data.
 
 Nova's garbage collector uses lists of "roots" in the `Agent` and starts tracing
 from these lists. What this effectively means is that if a JavaScript `Value`
@@ -216,9 +221,9 @@ which can happen entirely unconnected from heap mutation.
 
 ### Returning bound values from `GcScope` functions
 
-Functions that can trigger garbage collection, return bound values, and don't
-take any parameters do not actually exist in the engine at all but if they did,
-they would look like this:
+Currently, the entire Nova project contains no functions that can trigger
+garbage collection, return bound values, and take no parameters. Such a function
+would look like this:
 
 ```rust
 pub fn silly_example<'a>(
@@ -399,7 +404,7 @@ done at the call site and not before. The following would be _incorrect_:
 
 ```rust
 // *Incorrect* usage!
-let first = silly_example(agent, gc.reborrow()).unbind().bind(gc.nogc());
+let first = silly_example(agent, gc.reborrow()).unbind();
 let result = to_number(agent, first, gc.reborrow()); // No error.
 let other_result = to_number(agent, first, gc.reborrow()); // Uh oh, no error! `first` is now use-after-free!
 ```
