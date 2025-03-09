@@ -26,7 +26,7 @@ Nova uses an exact or precise tracing garbage collector. A tracing garbage
 collector is one where the garbage collector algorithm follows references
 between items to find new items, and marks the items it has seen. Once it no
 longer finds new items, the algorithm then releases all unmarked ones. An exact
-or precise tracing garbage collector is one that is guaranteed to only known
+or precise tracing garbage collector is one that is guaranteed to only mark known
 live items.
 
 The difference between an exact and a conservative garbage collector (which
