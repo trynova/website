@@ -836,4 +836,187 @@ local variables, and adding mutable local optional scoped values to the method:
 let a = arguments.get(0).bind(gc.nogc());
 let b = arguments.get(1).bind(gc.nogc());
 let c = arguments.get(2).bind(gc.nogc());
+if let (
+    TryResult::Continue(a),
+    TryResult::Continue(b),
+    TryResult::Continue(c)
+) = (
+    try_to_string(agent, a, gc.nogc()),
+    try_to_number(agent, b, gc.nogc()),
+    try_to_number(agent, c, gc.nogc())
+) {
+    // Try succeeded, continue on the fast path.
+} else {
+    // Slow path.
+}
+```
+
+### Avoiding excessive scoping
+
+When a slow path is encountered, and we need to perform scoping then the best
+case scenario is that we only need the scoped value for that singular slow path
+and never afterwards. This is often not the case, however: A value will need to
+be conditionally scoped to pass through multiple slow paths. In this case, we'd
+do not want to re-scope a value over and over again. For example, this kind of
+code would make no sense:
+
+```rust
+let value: Value;
+let value = value.scope(agent, gc.nogc());
+gc.reborrow(); // Some GcScope calls.
+let value = value.get(agent).bind(gc.nogc());
+gc.nogc(); // Some NoGc calls.
+let value = value.scope(agent, gc.nogc());
+gc.reborrow(); // Some GcScope calls.
+let value = value.get(agent).bind(gc.nogc());
+```
+
+This would scope the same value twice, which means that the value is stored on
+the heap in duplicate. Luckily we can avoid this.
+
+#### When in doubt, scope
+
+The simplest choice is to simply scope once and keep calling `.get(agent)` on
+the scoped value to get a bindable value for use as a parameter and so on. You
+may want to name the scoped value as `scoped_value`, and name the bound value as
+`value`. This way you can use the bound value as a parameter for a `GcScope`
+call while also scoping it.
+
+```rust
+let value: Value;
+let scoped_value = value.scope(agent, gc.nogc());
+some_call(agent, value.unbind(), gc.reborrow());
+other_call(agent, scoped_value.get(agent), gc.reborrow());
+let value = scoped_value.get(agent).bind(gc.nogc());
+```
+
+This is a perfectly valid way to handle the question of "how do I deal with
+`Value` invalidation on `gc.reborrow()`". It may not be the absolute peak of
+optimal performance, but it will get you to where you need to be the fastest.
+
+#### Optional scoped value
+
+When using conditional fast paths, you probably want to avoid repeatedly scoping
+the same values on each slow path. (It is also perfectly valid that slow paths
+are allowed to be slow and you don't need to worry about re-scoping values
+there. I'll allow it.) The way you can do this is to use an
+`Optional<Scoped<T>>`.
+
+```rust
+let mut value: Value;
+let mut scoped_value = None;
+let result = if let TryResult::Continue(result) = try_some_call(agent, value, gc.nogc()) {
+    result?
+} else {
+    scoped_value = Some(value.scope(agent, gc.nogc()));
+    let result = some_call(agent, value.unbind(), gc.reborrow())?;
+    value = scoped_value.as_ref().unwrap().get(agent).bind(gc.nogc());
+    result
+};
+
+// other work ...
+let other_value: Value;
+let result = if let TryResult::Continue(result) = try_other_call(agent, other_value, gc.nogc()) {
+    result?
+} else {
+    if scoped_value.is_none() {
+        scoped_value = Some(value.scope(agent, gc.nogc()));
+    }
+    let result = some_call(agent, other_value.unbind(), gc.reborrow())?;
+    value = scoped_value.as_ref().unwrap().get(agent).bind(gc.nogc());
+    result
+};
+```
+
+This is pretty ugly, but it does the job: `scoped_value` remains `None` for the
+entire duration of the call if we always pass through fast paths and only costs
+us the stack space. On slow paths we scope our needed value if a previous slow
+path didn't already do so, and re-read `value` from the heap afterwards.
+
+#### Changing values
+
+In loops especially, it may happen that a particular value needs to be scoped
+for a short period of time and then is no longer needed. In loops specifically,
+another value will then naturally appear on the next loop iteration and needs to
+again be scoped for the same short period of time.
+
+In these cases, you'd want to avoid allocating new value data onto the heap in
+each loop iteration. For this purpose, `Scoped` has the `unsafe fn replace`
+function. To use this function, you'll want to prepare a `Scoped` outside the
+loop and call the `replace` function on it when it is time to scope you value
+within the loop. Preparing the `Scoped` value outside the loop may be done
+normally using `value.scope(agent)` but for `Scoped<Value>` specifically, you
+can also use `Value::Undefined.scope_static()`. This prepares only the stack
+data for the `Scoped` and enables calling the `replace` function later.
+
+```rust
+let scoped_value = Value::Undefined.scope_static();
+loop {
+    let v: Value;
+    // SAFETY: scoped_value is never shared.
+    unsafe { scoped_value.replace(agent, v.unbind()) };
+    gc.reborrow();
+    let value = scoped_value.get(agent).bind(gc.nogc());
+}
+```
+
+The `replace` function is marked `unsafe` not because it can cause undefined
+behaviour (it currently cannot) but because it can break the JavaScript virtual
+machine's internal logic. If a scoped value is cloned and then passed as a
+parameter to a call that calls `replace` on the clone, then `get` on the
+original will return a (JavaScript-wise) different value than was originally
+scoped. Thus, calling the function on any `Scoped` that was received as a
+parameter should generally be avoided unless you're very sure that it is not a
+clone, or that no other caller will call `get` on the value anymore.
+
+Note: The API is not guaranteed to never perform new heap allocations for
+scoping. If the API is called on the same scoped value repeatedly, with every
+other call scoping a stack-only value (like a small integer or string) and every
+other call scoping a heap value (like an object), then the stack-only value
+calls will forget about the scoped heap allocation without explicitly releasing
+it, causing the heap value calls to need to allocate a new one.
+
+#### Changing types
+
+Sometimes a value needs to be scoped but is then later checked to be of a
+different type or gets converted to a different type with the original value
+never used afterwards, and needs to be scoped again. To keep the change, you'd
+want to reuse the previous scoped value but it's of a different type and won't
+work.
+
+In these cases, you can use the `unsafe fn replace_self` to change both the
+value and the type of what is being stored at the same time. The safety
+condition for this function is the same as `unsafe fn replace` above: The scoped
+value should not be a clone passed in as a parameter or if it is, you must be
+very sure that it's not going to be used by other callers. Or, you must be very
+sure that the actual value that is being stored by `replace_self` isn't actually
+functionally different. For example, converting to another bindable type via
+`TryFrom` kind of type conversions does not change the value but only narrows
+the type through a check. In these cases, calling `replace_self` on a cloned
+`Scoped` does not pose any threat to the JavaScript virtual machine's internal
+logic.
+
+```rust
+let value: Value;
+let scoped_value = value.scope(agent, gc.nogc());
+gc.reborrow();
+let Ok(object) = Object::try_from(scoped_value.get(agent).bind(gc.nogc())) else {
+    // Check failed.
+    return;
+}
+// SAFETY: Value isn't being changed, only type gets narrowed. Even clone is fine.
+let scoped_object = unsafe { scoped_value.clone().replace_self(agent, object.unbind()) };
+```
+
+You can of course also use this API to change entirely unrelated scoped values
+to others, but in that case the safety requirements need to be fulfilled.
+
+```rust
+let value: Value;
+let scoped_value = value.scope(agent, gc.nogc());
+gc.reborrow();
+let object: Object; // Not connected with value.
+// SAFETY: scoped_value is never cloned and not received as parameter, ie. not
+// shared. We can take over its scoped slot without anyone seeing it.
+let scoped_object = unsafe { scoped_value.replace_self(agent, object.unbind()) };
 ```
