@@ -26,8 +26,8 @@ Nova uses an exact or precise tracing garbage collector. A tracing garbage
 collector is one where the garbage collector algorithm follows references
 between items to find new items, and marks the items it has seen. Once it no
 longer finds new items, the algorithm then releases all unmarked ones. An exact
-or precise tracing garbage collector is one that is guaranteed to only mark known
-live items.
+or precise tracing garbage collector is one that is guaranteed to only mark
+known live items.
 
 The difference between an exact and a conservative garbage collector (which
 traces all possible live items) is, generally, in that a conservative garbage
@@ -677,7 +677,163 @@ The question is: How to ensure that a bound value lives long enough to be
 returned? The answer is, by consuming the `GcScope`. Or when under duress, by
 unbinding the value at the site of return.
 
-### Splitting a function's tail into a `NoGcScope` part
+### Splitting a function's tail or branch into a `NoGcScope` scope
 
 Oftentimes, functions will call into `GcScope` functions at the start but later
-move to operating purely with `NoGcScope` functions.
+move to operating purely with `NoGcScope` functions. In this case you might want
+to use `gc.into_nogc()` after the last `gc.reborrow()` call to ensure that the
+rest of the work does indeed happen without any chance of garbage collection.
+Unfortunately, when calling `gc.into_nogc()` any existing bound values get
+invalidated and cannot be used in the "tail" of the function.
+
+```rust
+// Some bound string values we've in the scope after parameter massaging.
+let s: String<'_>;
+let fill_string: String<'_>;
+
+// NoGcScope tail of the function starts.
+let gc = gc.into_nogc();
+
+do_work(agent, s, fill_string, gc); // Error: s and fill_string are bound to GcScope which was consumed.
+```
+
+Here it is, as the only exception to the rule, okay to temporarily unbind bound
+values to a local variable and rebind them to pass them into the tail:
+
+```rust
+// NoGcScope tail of the function starts.
+let (gc, s, fill_string) = {
+    let s = s.unbind();
+    let fill_string = fill_string.unbind();
+    let gc = gc.into_nogc();
+    (gc, s.bind(gc), fill_string.bind(gc))
+};
+```
+
+Or alternatively:
+
+```rust
+// NoGcScope tail of the function starts.
+let s = s.unbind();
+let fill_string = fill_string.unbind();
+let gc = gc.into_nogc();
+let s = s.bind(gc);
+let fill_string = fill_string.bind(gc);
+```
+
+Note that it is important to make sure that the new bound variable names
+(created after `gc.into_nogc()`) _must_ shadow the unbound variable names for
+safety.
+
+### Avoiding scoping on fast paths
+
+Scoping of variables is purposefully made to be cheap and in general it
+shouldn't be something you need to particularly worry about in your code. As an
+example, stack-only data is never put into the heap during scoping but is kept
+unchanged on the stack. Still, it is extra work that the engine must do and in
+many cases it is purely unnecessary.
+
+For instance, a builtin method that takes a string and two number parameters
+will usually be defined as calling `ToString` and `ToNumber` methods on the
+parameters. These can methods call arbitrary JavaScript through a `toValue`
+function defined on an object passed in as a parameter, and hence they can
+trigger garbage collection. The builtin method must be prepared for this
+possibility, so scoping would normally be necessary.
+
+```rust
+fn builtin_method<'a>(
+    agent: &mut Agent,
+    _this_value: Value,
+    arguments: ArgumentsList,
+    gc: GcScope<'a, '_>
+) -> JsResult<Value<'a>> {
+    let a = arguments.get(0).bind(gc.nogc());
+    let b = arguments.get(1).scope(agent, gc.nogc());
+    let c = arguments.get(2).scope(agent, gc.nogc());
+    let a = to_string(agent, a.unbind(), gc.reborrow())?.unbind().scope(agent, gc.nogc());
+    let b = to_number(agent, b.get(agent), gc.reborrow())?.unbind().scope(agent, gc.nogc());
+    let c = to_number(agent, c.get(agent), gc.reborrow())?.unbind().bind(gc.nogc());
+    let a = a.get(agent).bind(gc.nogc());
+    let b = b.get(agent).bind(gc.nogc());
+}
+```
+
+At the end here we have bound values `a`, `b`, and `c` on the stack and
+everything is fine. There are two unfortunate parts here though: First, we've
+called `scope` four times to scope three values and second, the usual case is
+going to be that these parameters were already of the correct type. In that case
+these methods are guaranteed to not call into JavaScript, and are actually
+guaranteed to return the values as-is. None of the methods are likely to have
+any chance of triggering garbage collection.
+
+We have two main ways to avoid the mostly-unnecessary scoping:
+
+1. Conditional fast paths for correctly typed calls.
+2. Try method variants.
+
+Additionally, the `Scoped` type has some unsafe methods that can be used to cut
+down on the amount of work that scoping needs to perform.
+
+#### Conditional fast paths
+
+A conditional fast path is one where the code checks its preferred types ahead
+of time, and avoids all potentially garbage collection triggering method calls
+if the types match. The simplest and most targeted fast path for the above
+example method would be as follows:
+
+```rust
+let a = arguments.get(0).bind(gc.nogc());
+let b = arguments.get(1).bind(gc.nogc());
+let c = arguments.get(2).bind(gc.nogc());
+if let (Ok(a), Ok(b), Ok(c)) = (String::try_from(a), Number::try_from(b), Number::try_from(c)) {
+    // Fast path without conversions, scoping.
+} else {
+    // Slow path.
+}
+```
+
+This will only work for the exactly correct call of the method, so it is
+maximally strict and (probably) maximally optimal. A more permissive but
+somewhat less optimal fast path can, in this case, be created based on the
+knowledge that primitive values will never cause a call into JavaScript in the
+`ToString` and `ToNumber` methods. Nova includes special variants of these
+methods for calling with primitive values:
+
+```rust
+let a = arguments.get(0).bind(gc.nogc());
+let b = arguments.get(1).bind(gc.nogc());
+let c = arguments.get(2).bind(gc.nogc());
+if let (Ok(a), Ok(b), Ok(c)) = (Primitive::try_from(a), Primitive::try_from(b), Primitive::try_from(c)) {
+    // Fast path without scoping.
+    let a = to_string_primitive(agent, a, gc.nogc());
+    let b = to_number_primitive(agent, b, gc.nogc());
+    let c = to_number_primitive(agent, c, gc.nogc());
+} else {
+    // Slow path.
+}
+```
+
+This will allow a wider range of ways to call the method to enter the fast path
+but at the cost of still having to call conversion methods. There is no hard and
+fast rule for which one should be preferred: This will likely be an ongoing
+matter of personal preference and performance measuring.
+
+#### Try method variants
+
+Similarly to the primitive conversion variants, Nova also includes "try
+variants" of various methods. These methods return a `TryResult` (which is just
+an alias of `ControlFlow`) which tells if the method finished successfully and
+the execution of the caller can continue (`TryResult::Continue` is then the
+returned variant), or if the method encountered a need to call into JavaScript
+and thus had to break out early (in which case `TryResult::Break` is returned).
+
+These methods can be used to avoid splitting a method into a slow and fast path,
+at the cost of splitting smaller parts of the method into try and fallback
+paths. Doing so generally requires quite a bit of dancing around with mutable
+local variables, and adding mutable local optional scoped values to the method:
+
+```rust
+let a = arguments.get(0).bind(gc.nogc());
+let b = arguments.get(1).bind(gc.nogc());
+let c = arguments.get(2).bind(gc.nogc());
+```
