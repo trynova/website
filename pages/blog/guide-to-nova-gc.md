@@ -1020,3 +1020,8 @@ let object: Object; // Not connected with value.
 // shared. We can take over its scoped slot without anyone seeing it.
 let scoped_object = unsafe { scoped_value.replace_self(agent, object.unbind()) };
 ```
+
+## The End
+
+We're at the end, for now. But this is a guide and a guide is no good if it
+doesn't get updated. So, hopefully more will be added later. So long.
