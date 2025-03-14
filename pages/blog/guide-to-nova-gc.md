@@ -1,7 +1,7 @@
 ---
 title: Guide to Nova's garbage collector
 description: An in-depth, step-by-step tutorial for all your garbage disposal needs!
-date: 2025-03-01
+date: 2025-03-14
 authors:
   - name: Aapo Alasuutari
     url: https://github.com/aapoalas
