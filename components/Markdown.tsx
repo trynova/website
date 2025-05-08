@@ -1,4 +1,5 @@
-import * as marked from "marked";
+import { Marked } from "marked";
+import markedFootnote from "marked-footnote";
 
 import { css } from "utils/css.ts";
 import clsx from "clsx";
@@ -11,7 +12,9 @@ export interface MarkdownProps {
 }
 
 export function Markdown({ body, className }: MarkdownProps) {
-  const html = marked.parse(body, { async: false }) as string;
+  const html = new Marked()
+    .use(markedFootnote())
+    .parse(body, { async: false }) as string;
 
   return (
     <section
