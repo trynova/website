@@ -1,5 +1,9 @@
 import { renderToString } from "preact-render-to-string";
-import { Octokit } from "octokit";
+import { Octokit } from "@octokit/core";
+import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
+import { throttling } from "@octokit/plugin-throttling";
+import { paginateRest } from "@octokit/plugin-paginate-rest";
+import type { EndpointDefaults } from "@octokit/types";
 
 import { Chart } from "fresh_charts";
 
@@ -11,6 +15,13 @@ import { write } from "utils/fs.ts";
 import { Layout } from "components/Layout.tsx";
 
 const classes = await css(import.meta.resolve("./test262.css"));
+
+export interface Commit {
+  sha: string;
+  message: string;
+  date: Temporal.Instant;
+  metrics: Metrics;
+}
 
 export interface Metrics {
   results: {
@@ -24,10 +35,13 @@ export interface Metrics {
   total: number;
 }
 
-function dataset(datapoints: typeof data, result: keyof Metrics["results"]) {
+function makeDataset(
+  commits: Commit[],
+  result: keyof Metrics["results"],
+) {
   return {
     label: result[0].toUpperCase() + result.slice(1),
-    data: datapoints.map(({ metrics: { total, results } }) =>
+    data: commits.map(({ metrics: { total, results } }) =>
       results[result] / total * 100
     ),
     backgroundColor: `var(--chart-${result})`,
@@ -37,33 +51,76 @@ function dataset(datapoints: typeof data, result: keyof Metrics["results"]) {
   };
 }
 
-const octokit = new Octokit({
-  auth: Deno.env.get("GITHUB_TOKEN"),
-});
-const commits = await octokit.rest.repos.listCommits({
-  owner: "trynova",
-  repo: "nova",
-  path: "tests/metrics.json",
-  per_page: 100,
-});
+async function* fetchMetrics(): AsyncGenerator<Commit> {
+  const MyOctokit = Octokit.plugin(
+    restEndpointMethods,
+    paginateRest,
+    throttling,
+  );
 
-const data = (await Promise.all(commits.data.map(async (commit) => {
-  const metrics = await (await fetch(
-    `https://raw.githubusercontent.com/trynova/nova/${commit.sha}/tests/metrics.json`,
-  )).json() as Metrics;
-  return {
-    sha: commit.sha,
-    message: commit.commit.message,
-    date: Temporal.Instant.from(commit.commit.author?.date),
-    metrics,
-  };
-}))).sort(({ date: a }, { date: b }) => Temporal.Instant.compare(a, b));
+  function rateLimitHandler(
+    retryAfter: number,
+    options: Required<EndpointDefaults>,
+    octokit: Octokit,
+    retryCount: number,
+  ) {
+    octokit.log.warn(
+      `Request quota exhausted for request ${options.method} ${options.url}`,
+    );
+    octokit.log.info(
+      `Retry count is ${retryCount}`,
+    );
 
-if (data.length === 1) data.push(data[0]);
+    if (retryCount < 3) {
+      octokit.log.warn(`Retrying after ${retryAfter} seconds!`);
+      return true;
+    }
+  }
 
-const latest = data.at(-1)!;
+  const octokit = new MyOctokit({
+    auth: Deno.env.get("GITHUB_TOKEN"),
+    throttle: {
+      enabled: true,
+      onRateLimit: rateLimitHandler,
+      onSecondaryRateLimit: rateLimitHandler,
+    },
+  });
 
-function Test262() {
+  for await (
+    const { data: commits } of octokit.paginate.iterator(
+      octokit.rest.repos.listCommits,
+      {
+        owner: "trynova",
+        repo: "nova",
+        path: "tests/metrics.json",
+      },
+    )
+  ) {
+    for (const commit of commits) {
+      const response = await octokit.rest.repos.getContent({
+        mediaType: {
+          format: "raw",
+        },
+        owner: "trynova",
+        repo: "nova",
+        path: "tests/metrics.json",
+        ref: commit.sha,
+      });
+      if (typeof response.data !== "string") continue;
+
+      yield {
+        sha: commit.sha,
+        message: commit.commit.message,
+        date: Temporal.Instant.from(commit.commit.author?.date),
+        metrics: JSON.parse(response.data) as Metrics,
+      };
+    }
+  }
+}
+
+function Test262({ commits }: { commits: Commit[] }) {
+  const latest = commits.at(-1)!;
+
   return (
     <Layout>
       <h1>Test262</h1>
@@ -141,14 +198,14 @@ function Test262() {
           },
         }}
         data={{
-          labels: data.map(({ sha }) => sha.slice(0, 7)),
+          labels: commits.map(({ sha }) => sha.slice(0, 7)),
           datasets: [
-            dataset(data, "pass"),
-            dataset(data, "skip"),
-            dataset(data, "timeout"),
-            dataset(data, "unresolved"),
-            dataset(data, "fail"),
-            dataset(data, "crash"),
+            makeDataset(commits, "pass"),
+            makeDataset(commits, "skip"),
+            makeDataset(commits, "timeout"),
+            makeDataset(commits, "unresolved"),
+            makeDataset(commits, "fail"),
+            makeDataset(commits, "crash"),
           ],
         }}
       />
@@ -212,9 +269,17 @@ function Test262() {
 }
 
 if (import.meta.main) {
+  const commits = (await Array.fromAsync(fetchMetrics()))
+    .sort(({ date: a }, { date: b }) => Temporal.Instant.compare(a, b));
+
+  // If we only have one commit, duplicate it to make the chart look better
+  // this isn't an issue anymore since we have a lot of commits, but it was
+  // a problem when we first started tracking test262 metrics.
+  if (commits.length === 1) commits.push(commits[0]);
+
   await write(
     output(import.meta.url),
-    html(renderToString(<Test262 />), {
+    html(renderToString(<Test262 commits={commits} />), {
       title: "Test262 · Nova",
       description:
         "The Nova engines current and historical Test262 test results",
