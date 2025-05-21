@@ -25,3 +25,7 @@
   padding: 8px;
   font-size: 12px;
 }
+
+.table caption code {
+  white-space: preserve;
+}

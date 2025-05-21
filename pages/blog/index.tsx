@@ -25,7 +25,7 @@ function Index() {
     <Layout>
       <h1>Blog</h1>
       <ul class={classes.list}>
-        {allPosts.map((post) => <BlogPostCard {...post} />)}
+        {allPosts.map((post, i) => <BlogPostCard key={i} {...post} />)}
       </ul>
     </Layout>
   );

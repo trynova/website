@@ -13,7 +13,7 @@ function Talks() {
       <h1>Talks</h1>
       <Talk
         title="Abusing reborrowing for fun, profit, and a safepoint garbage collector"
-        description={"Focuses on the technical challenges and solutions that lead to Nova's safepoint garbage collector design. The final design mildly abuses Rust's \"reborrowing\" functionality to make the borrow checker not only understand Nova's garbage collector but cooperate with making sure it is used in the correct way."}
+        description="Focuses on the technical challenges and solutions that lead to Nova's safepoint garbage collector design. The final design mildly abuses Rust's \"reborrowing\" functionality to make the borrow checker not only understand Nova's garbage collector but cooperate with making sure it is used in the correct way."
         speaker={{
           name: "Aapo Alasuutari",
           url: "https://github.com/aapoalas",
