@@ -140,7 +140,7 @@ struct ObjectHeapData<const N: usize> {
     /// a u32 index to ShapeVec
     shapes: [Shape; N],
     /// a u32 index to PropertiesHeapDataVec<CAP> where CAP is determined by
-    /// the crresponding Shape.
+    /// the corresponding Shape.
     properties: [PropertiesIndex; N],
 }
 
