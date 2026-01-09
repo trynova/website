@@ -320,9 +320,9 @@ call which is proof that there are no more garbage collection safepoints within
 the function. Unfortunately, this flawlessness comes at the price of 7
 `.unbind()` calls. These are necessary because each handle carries a shared
 covariant reference to the `Gc` parameter and these invalidate when
-`gc.reborrow()` is called but Rust their covariant lifetime requires them to
-stay valid until the end of the `internal_set` call or longer, which they cannot
-do: hence the handles must be unbound at function call interfaces so that they
+`gc.reborrow()` is called while their covariant lifetime requires them to stay
+valid until the end of the `internal_set` call or longer, which they cannot do:
+hence the handles must be unbound at function call interfaces so that they
 forget the covariant reference.
 
 So, what would this look like with contravariant handles? Let's take a look:
