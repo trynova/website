@@ -47,8 +47,8 @@ are we allowed to drop the original `T`. (Also note how this relates with eg.
 tombstones in concrete garbage collector implementations.) When the heap is
 dropped, all `Handle`s within are likewise dropped, but if the heap stays alive
 until the end of the program then so do the `Handle`s. It thus seems like the
-correct lifetime is some `'external` that is determined by the heap's owner, but for
-convenience's sake we'll choose to use the `'static` lifetime here.
+correct lifetime is some `'external` that is determined by the heap's owner, but
+for convenience's sake we'll choose to use the `'static` lifetime here.
 
 Now, consider a singular handle `Handle<'_, T>` on the stack, and remember that
 these are unrooted handles and that our garbage collector does not do stack
@@ -364,26 +364,27 @@ performed currently, and getting rid of that will probably bring a smile to many
 a contributor's face.
 
 But we do lose some convenience as well: binding parameters is no longer just
-`let o = o.bind(nogc);` but instead requires two calls. First is the `let o =
-o.local();` call: this shadows the handle (parameter that has the problematic
-"until the end of this function call" lifetime) with a locally created handle
-whose lifetime will end within this function. The second is the `nogc.join(o);`
-call: this "mixes" or combines the lifetime of the the contravariant handle with
-the covariant lifetime of a local `&Gc` reference used in the `gc.nogc()` call.
-(You can also consider this to be the point when we write a valid value into our
-"sink" and thus prove to ourselves that it is safe to read from the normally
-write-only reference.) When we then create a local `&mut Gc` reference in the
-`gc.reborrow()` call, it invalidates the `&Gc` reference that our handle's
-lifetime is mixed up with which then invalidates the handles. Importantly,
-however, for contravariant references a shorter lifetime can be used in place of
-a longer one: this means that the handles that we pass to the `internal_set` as
-parameters just before the `gc.reborrow()` call (which is conveniently the last
-parameter and thus last to be evaluated for essentially this very reason), can
-safely be used in place of the function's parameters with the lifetime of "until
-the end of this call". And because this does not expand the `&Gc` reference
-lifetime to encompass until the end of the `internal_set` (just like using a
-`&'static T` in place of a `&'a T` does not expand `'a` to `'static`), the
-invalidation does not invalidate the already passed-in contravariant handles.
+`let o = o.bind(nogc);` but instead requires two calls. First is the
+`let o = o.local();` call: this shadows the handle (parameter that has the
+problematic "until the end of this function call" lifetime) with a locally
+created handle whose lifetime will end within this function. The second is the
+`nogc.join(o);` call: this "mixes" or combines the lifetime of the the
+contravariant handle with the covariant lifetime of a local `&Gc` reference used
+in the `gc.nogc()` call. (You can also consider this to be the point when we
+write a valid value into our "sink" and thus prove to ourselves that it is safe
+to read from the normally write-only reference.) When we then create a local
+`&mut Gc` reference in the `gc.reborrow()` call, it invalidates the `&Gc`
+reference that our handle's lifetime is mixed up with which then invalidates the
+handles. Importantly, however, for contravariant references a shorter lifetime
+can be used in place of a longer one: this means that the handles that we pass
+to the `internal_set` as parameters just before the `gc.reborrow()` call (which
+is conveniently the last parameter and thus last to be evaluated for essentially
+this very reason), can safely be used in place of the function's parameters with
+the lifetime of "until the end of this call". And because this does not expand
+the `&Gc` reference lifetime to encompass until the end of the `internal_set`
+(just like using a `&'static T` in place of a `&'a T` does not expand `'a` to
+`'static`), the invalidation does not invalidate the already passed-in
+contravariant handles.
 
 Being able to thus pass "bound" handles into calls together with the `Gc<'_>`
 marker type is such an important thing that the loss of some binding convenience
