@@ -47,22 +47,20 @@ are we allowed to drop the original `T`. (Also note how this relates with eg.
 tombstones in concrete garbage collector implementations.) When the heap is
 dropped, all `Handle`s within are likewise dropped, but if the heap stays alive
 until the end of the program then so do the `Handle`s. It thus seems like the
-correct lifetime is some `'a` that is determined by the heap's owner, but for
+correct lifetime is some `'external` that is determined by the heap's owner, but for
 convenience's sake we'll choose to use the `'static` lifetime here.
 
 Now, consider a singular handle `Handle<'_, T>` on the stack, and remember that
 these are unrooted handles and that our garbage collector does not do stack
 scanning. That means that the `T` is only guaranteed to exist until the next
 garbage collection run: the fact that we have a `Handle<'_, T>` in the first
-place guarantees that the `T` does exist when we get the handle, but once
+place means that the `T` should at least exist when we get the handle, but once
 garbage collection runs it might have dropped or moved the `T` such that our
 handle no longer points to a valid value. The lifetime we can ascribe to
 `Handle` is thus some `'local` lifetime during which it is guaranteed that
 garbage collection does not happen. This `'local` lifetime is obviously shorter
-than `'static` but now here comes the contrarian part:
-
-Imagine we get a mutable reference to the handle on the heap and try to write a
-copy of our local handle into it:
+than `'static`. Now imagine we get a mutable reference to the handle on the heap
+and try to write a copy of our local handle into it, and watch what happens:
 
 ```rust
 let local_handle: Handle<'local, T> = local;
@@ -75,8 +73,8 @@ handle: we store the local handle on the heap where the garbage collector can
 see it, thus increasing its lifetime. This code is therefore completely fine
 from a logical standpoint. But! If we do this in the Nova JavaScript engine of
 today, it does not compile: our handles are covariant on their lifetime
-parameter, equal to normal references, and using Rust references the above would
-look like this:
+parameter, just like normal references, and using Rust references the above
+would look like this:
 
 ```rust
 let local_handle: &'local T = &0;
@@ -135,18 +133,20 @@ _smaller_ than `'a`: to show this in Rust we use a `fn(&'a T)`, or "give me a
 function that can be called with a reference of lifetime `'a`."
 
 Now when a function takes a `fn(&'a T)` it means that there is some lifetime
-`'a` during which this function can be called. We can of course call the
-function with a reference that is valid for longer as that longer reference is
-still valid during the `'a` lifetime. But we can also "get ahead of callers" and
-expand the lifetime we require of them ourselves. We do this by reassigning the
-function into `fn(&'longer T)` or `fn(&'static T)`, ie. we assign a complex type
-(function taking one reference as a parameter) with a shorter lifetime parameter
-`'a` in place of a complex type with a longer lifetime parameter `'longer` or
-`'static`. Note that this doesn't mean that we expand the `'a` lifetime to
-`'longer` or `'static`, instead it means that we can simply use a complex type
-with a shorter lifetime in a place that requires a longer lifetime. In function
-parameter terms, we (spuriously) require a longer lifetime of its parameters,
-which then shortens back down to `'a` inside the function's actual contents.
+`'a` during which this function can be called. The function can of course be
+called with references that are valid for longer (as long as that longer
+reference is still valid during at least part of the `'a` lifetime). But as we
+hold the function, we can also "get ahead of callers" and expand the lifetime we
+require of callers ourselves. We do this by reassigning the function into some
+place with the type `fn(&'static T)` (alternatively use some other lifetime
+`'external` longer than `'a`), ie. we assign a complex type (function taking one
+reference as a parameter) with a shorter lifetime parameter `'a` in place of a
+complex type with a longer lifetime parameter `'static`. Note that this doesn't
+mean that we expand the `'a` lifetime to `'static`, it just means that we can
+use a complex type with a shorter lifetime in place of one with a longer
+lifetime. In function parameter terms, we (spuriously) require a longer lifetime
+of callers, while the function internally still considers all parameters to have
+the shorter lifetime `'a`.
 
 A great example of this in action comes from [Boxy](https://github.com/BoxyUwU)
 over in the Rust language Zulip:
@@ -178,21 +178,21 @@ fn foo<'a>(fnptr: fn(&'a T)) {
 [Rust Playground](https://play.rust-lang.org/?version=stable&mode=debug&edition=2024&gist=740818a2a31f91810387bf15a0a44a4d)
 
 Now, putting this into action with custom contravariant lifetime types is where
-things really get convoluted. The function example is simple enough, but let's
-rewrite it using custom types:
+things really start to get convoluted. The function example is simple enough,
+but let's rewrite it using custom types:
 
 ```rust
-static BORROW: PhantomData<&'static ()> = PhantomData;
+static BORROW: &'static T = &T::new();
 
-fn foo<'a>(cov: Contravariant<'a>) {
-    let local: PhantomData<&'a ()> = BORROW;
+fn foo<'a>(cov: Contravariant<'a, T>) {
+    let local: &'a T = BORROW;
     cov.f(local);
 
-    let local_cov: Contravariant<'static> = cov;
+    let local_cov: Contravariant<'static, T> = cov;
     local_cov.f(BORROW);
 
-    let local_closure = |param: PhantomData<&'static ()>| {
-        let param: PhantomData<&'a ()> = param;
+    let local_closure = |param: &'static T| {
+        let param: &'a T = param;
         cov.f(param);
     };
     local_closure(BORROW);
@@ -202,34 +202,34 @@ fn foo<'a>(cov: Contravariant<'a>) {
 [Rust Playground](https://play.rust-lang.org/?version=stable&mode=debug&edition=2024&gist=19615993781251b3cbd3ca2f66517dd2)
 
 Now that might already make your head spin! We take in a parameter
-`Contravariant<'a>` but then we can use that value in place of
-`Contravariant<'static>`! That is pretty odd indeed, but that's just how
-contravariance works.
+`Contravariant<'a, T>` but then we can use that value in place of
+`Contravariant<'static, T>`! That looks pretty odd indeed, but that's just
+contravariance for you.
 
-Now that we're dealing with contravariant marker types, we need to start
-thinking about what such types really mean. To help with that, let's introduce
-another way of thinking about contravariance: contravariant types can be
-interpreted as "sinks" into which a type or any subtype can be dumped into. This
-hints to us that a contravariant reference is a "write-only reference". You can
-never safely and unconditionally read from them but you can write into them for
-their entire lifetime. What's the point in that, then? Well, it depends on the
-API built around it, but there seem to be possibilities here. Even the most
-ardent write-only type, `MaybeUninit`, is not write-only forever but only until
-you're sure it is safe to read. So it goes with contravariant references: they
-can only be written into until you're sure it is safe to read from it as well.
-The tough part is then finding how to model the proof needed to safely read
-through a contravariant reference, or in other words how to design safe APIs
-around them.
+Now that we're dealing with contravariant reference types, we need to think
+about they really mean. To help with that, let's introduce another way of
+thinking about contravariance: contravariant types can be interpreted as "sinks"
+into which a type or its subtype can be dumped into, never to return. This hints
+to us that a contravariant reference is a "write-only reference". You can never
+safely and unconditionally read from them but you can write into them for their
+entire lifetime. What's the point in that, then? Well, it depends on the API
+built around it, but there are possibilities here. An example of a familiar
+write-only type is the good old `MaybeUninit`, but even that is not write-only
+forever but only until you're sure it is safe to read. So too it goes with
+contravariant references: they can only be written into until you're sure it is
+safe to read from it as well. The tough part is then finding how to model the
+proof needed to safely read through a contravariant reference, or in other words
+how to design safe APIs around them.
 
-There's is an added wrinkle to this: we probably need a new feature in Rust to
+There is an added wrinkle to this: we probably need a new feature in Rust to
 make contravariant references safe to pass between functions. That feature is
-lifetimes that do not live until the end of callee function: a contravariant
+lifetimes that do not live until the end of the callee function: a contravariant
 reference by itself does not guarantee that it is safe to read through it. Thus,
 receiving one as a parameter to a function is rife with danger: the reference
-cannot be assumed to be valid unless you have proof, it might be made unsound to
-read by work within your function, yet its lifetime is the standard Rust "until
-the end of this function call" and that helps us none when trying to write safe
-code.
+cannot be assumed to be valid unless you have proof and it might be made unsound
+to read from by work done within your own function, yet its lifetime is the
+standard Rust "until the end of this function call" lifetime parameter and that
+helps us none when trying to write safe code.
 
 In current Rust, only lifetimes that are created within your function can also
 end within it. So, inside a function we can create a contravariant reference and
@@ -248,37 +248,39 @@ interfaces today.
 This is then the problem: upon receiving a contravariant reference and a proof
 parameter, you must trust whoever called you to have given you valid proof and,
 importantly, _to not have made a mistake_! I'll say that again: contravariant
-references as a parameter (and as a return value) require callers to not have
-made a mistake! This has been called "profoundly un-Rusty", and that's not wrong
-to say. Hence the need for passing in parameter lifetimes that end within the
-callee: with that we could (somehow) pass the contravariant reference in with
-its lifetime bound to the proof value's existence, and then that would enable us
-to escape the curse of having to assume no one makes mistakes. As we well know,
-mistakes always happen.
+references as a parameter (and as a return value too) require callers (or
+callees) to not have made a mistake! This has been called "profoundly un-Rusty",
+and that's not wrong to say as this completely wrecks the idea of local
+reasoning that is so fundamental to Rust's excellence. Hence the need for
+passing in parameter lifetimes that end within the callee: with that we could
+(somehow) pass the contravariant reference in with its lifetime bound to the
+proof value's existence, and that would then enable us to escape the curse of
+having to assume no one makes mistakes. As we well know, mistakes always happen.
 
 That being said, this fundamental unsafety of contravariant references is not a
-critical issue as long as you take it into account: in Nova we do not rely on
-our handles being mistake-free, which means that we always check that them for
-validity before using them for reads. A mistake with handles leads to either a
+blocker as long as you take it into account: in Nova we do not rely on our
+handles being mistake-free, which means that we always check their validity
+before using them for reads. A mistake with handles then leads to either a
 bounds check induced panic, or to one JavaScript value changing into another one
 of the same type. The former is unfortunate but safe, the latter is absolutely a
 bad thing to happen and constitutes JavaScript language-wise "undefined
 behaviour": at worst this could be utilised as an attack vector against a
-JavaScript runtime running Nova, so this is not a good thing generally. If need
-be, we can also check against this using generational handles: we luckily also
-have 24 unused bits in heap handles that we could use for that purpose.
+JavaScript runtime running Nova, so this is not a good thing generally, but it
+is also not an immediate guarantee of Rust undefined behaviour happening and
+leading to the end of all that is pure and holy. If need be, we can also check
+against this using generational handles: we luckily also have 24 unused bits in
+heap handles that we could use for that purpose.
 
 ## On the double? On the contrary!
 
-It's time to start thinking about what this means in terms of the Nova
+It's time to start thinking about what this concretely means for the Nova
 JavaScript engine. It is clear that contravariant handles is what we will have:
 they match the actual semantics of garbage collection, and their big unsafety
 downside is something that we already have to deal with. So while I have some
-more stones to turn and tires to kick before I'm fully ready to commit, it does
-seem like Nova's JavaScript Values are in for a big change in the near future!
-There are some excellent things that come from this change, first and foremost
-being that a lot of the `.unbind()` and `.bind(gc.nogc())` calls of the engine
-will disappear. Let's take an example; this is some code from the engine today:
+more stones to turn and tires to kick before I'm fully ready to start working,
+it does seem like Nova's JavaScript Values are in for a big change in the near
+future! There are some excellent things that come from this change. Let's take
+an example; this is some code from the engine today:
 
 ```rust
 pub(crate) fn set<'a>(
@@ -308,19 +310,22 @@ pub(crate) fn set<'a>(
 ```
 
 This is the function used to set a value on an object, triggered whenever
-JavaScript code performs `o.p = v;` or `o[p] = v;`. It is a flawless piece of
+JavaScript code performs `o.p = v;` or `o[p] = v;`. It is a "flawless" piece of
 Nova engine code in that it is both fully correct from the garbage collector's
-standpoint, but also written such that the borrow checker will verify that GC
+standpoint and also written so that the borrow checker will verify the GC
 safety: every handle parameter is bound to the GC lifetime at function entry,
-and the `PropertyValue<'static>` received from the `scoped_p.get(agent)` call is
-likewise properly bound. Unfortunately, this flawlessness comes at a price of
-requiring 7 `.unbind()` calls. These are necessary essentially because each
-handle carries a shared covariant reference to the `Gc` parameter and these
-invalidate immediately when `gc.reborrow()` is called: hence the handles must be
-unbound at function call interfaces so that they forget the covariant reference.
+and so is the `PropertyValue<'static>` returned from the `scoped_p.get(agent)`
+call even though at that point we're already past a `let gc = gc.into_nogc();`
+call which is proof that there are no more garbage collection safepoints within
+the function. Unfortunately, this flawlessness comes at the price of 7
+`.unbind()` calls. These are necessary because each handle carries a shared
+covariant reference to the `Gc` parameter and these invalidate when
+`gc.reborrow()` is called but Rust their covariant lifetime requires them to
+stay valid until the end of the `internal_set` call or longer, which they cannot
+do: hence the handles must be unbound at function call interfaces so that they
+forget the covariant reference.
 
-So, what would this look like with contravariant handles? Here is what it would
-be like:
+So, what would this look like with contravariant handles? Let's take a look:
 
 ```rust
 pub(crate) fn set<'a>(
@@ -354,14 +359,14 @@ The most important change here is the actual `internal_set` call: the
 `.unbind()` and `.bind(gc.nogc())` calls have all disappeared. Especially
 important from an ergonomics standpoint is that we can now re-throw errors using
 the `?` operator without having to do the chain of `.unbind()?.bind(gc.nogc())`.
-There are nearly 800 places in the Nova codebase that perform this song and
-dance currently, and getting rid of that will probably bring a smile to many a
-contributor's face.
+There are nearly 800 places in the Nova codebase where this song and dance is
+performed currently, and getting rid of that will probably bring a smile to many
+a contributor's face.
 
 But we do lose some convenience as well: binding parameters is no longer just
-`let o = o.bind(nogc);` but instead requires two calls. First is the
-`let o = o.local();` call: this shadows the handle (parameter that has the
-problematic "until the end of this function call" lifetime) with a local handle
+`let o = o.bind(nogc);` but instead requires two calls. First is the `let o =
+o.local();` call: this shadows the handle (parameter that has the problematic
+"until the end of this function call" lifetime) with a locally created handle
 whose lifetime will end within this function. The second is the `nogc.join(o);`
 call: this "mixes" or combines the lifetime of the the contravariant handle with
 the covariant lifetime of a local `&Gc` reference used in the `gc.nogc()` call.
@@ -369,16 +374,16 @@ the covariant lifetime of a local `&Gc` reference used in the `gc.nogc()` call.
 "sink" and thus prove to ourselves that it is safe to read from the normally
 write-only reference.) When we then create a local `&mut Gc` reference in the
 `gc.reborrow()` call, it invalidates the `&Gc` reference that our handle's
-lifetime is mixed up with. Importantly, however, for contravariant references a
-shorter lifetime can be used in place of a longer one: this means that the
-handles that we pass to the `internal_set` as parameters just before the
-`gc.reborrow()` call (which is conveniently the last parameter and thus last to
-be evaluated for essentially this very reason), can safely be used in place of
-the function's parameters with the lifetime of "until the end of this call". And
-because this does not expand the `&Gc` reference lifetime to encompass until the
-end of the `internal_set` (just like using a `&'static T` in place of a `&'a T`
-does not expand `'a` to `'static`), the invalidation does not invalidate the
-already passed-in contravariant handles.
+lifetime is mixed up with which then invalidates the handles. Importantly,
+however, for contravariant references a shorter lifetime can be used in place of
+a longer one: this means that the handles that we pass to the `internal_set` as
+parameters just before the `gc.reborrow()` call (which is conveniently the last
+parameter and thus last to be evaluated for essentially this very reason), can
+safely be used in place of the function's parameters with the lifetime of "until
+the end of this call". And because this does not expand the `&Gc` reference
+lifetime to encompass until the end of the `internal_set` (just like using a
+`&'static T` in place of a `&'a T` does not expand `'a` to `'static`), the
+invalidation does not invalidate the already passed-in contravariant handles.
 
 Being able to thus pass "bound" handles into calls together with the `Gc<'_>`
 marker type is such an important thing that the loss of some binding convenience
@@ -400,7 +405,14 @@ a part to play in describing self-referential data structures in general. What
 kind of a part that will be and what their role will be I do not yet know, but
 it seems clear to me that with the right API designs contravariant references
 can bring the joy of lifetimes to many avenues where they previously were barred
-from. Either that, or I am being a total crackpot. I guess time and effort will
-tell.
+from. If you're interested, I recommend trying out writing a doubly-linked list
+using contravariant references in place of node pointers, or seeing what it
+would look like to pass an `'external` lifetime through a self-referential data
+structure that internally binds to contravariant references. Especially
+interesting would be seeing if that lifetime can also be threaded back through,
+so that some callback API coming from the data structure back to the owner could
+benefit from contravariant lifetimes joining the two together.
 
-Until then, stay contrary!
+I expect it might bring some surprising and positive results! Either that, or I
+am being a total crackpot. I guess time and effort will tell. Until then, stay
+contrary!
