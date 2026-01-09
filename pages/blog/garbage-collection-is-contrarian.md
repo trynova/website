@@ -8,53 +8,54 @@ authors:
 ---
 
 Previously on this blog I've written about how Nova JavaScript engine
-[models garbage collection to the Rust borrow checker](./guide-to-nova-gc) and
-how to work with it, I've rambled about how I
+[models garbage collection using the Rust borrow checker](./guide-to-nova-gc)
+and how to work with it, I've rambled about how I
 [came up with the model](./taking-out-the-trash), and I've written about the
 [philosophical underpinnings of garbage collection in general](./memory-hell).
 Most importantly I have, together with a lot of contributors, written a
 JavaScript engine encompassing more than 100,000 lines of Rust using this model
 which is equal parts excellent and awful. It is excellent in that it manages to
-explain garbage collected handles in such a way that the borrow checker will
-check that unrooted handles are not used after garbage collection safepoints,
-but it is awful in how it achieves this, turning code into a soup of
-`let handle = handle.bind(nogc)` and `handle.unbind()` calls. A Norwegian
+explain garbage collected handles in such a way that the borrow checker can
+check that unrooted handles are not kept on stack past garbage collection
+safepoints, but it is awful in how it achieves this, turning code into a soup of
+`let handle =
+handle.bind(nogc)` and `handle.unbind()` calls. A Norwegian
 university employee said of the system just last month: "That's worse than C++."
 
-In all this time I've been working with this model with the assumption that it
+This entire time, I've been working with this model with the assumption that it
 is the correct way to model garbage collection, and that the manual aspects and
 some limitations of it are simply caused by limitations of the Rust borrow
 checker. Much of this changed last weekend because I was writing a safety
 comment to explain a very contrarian limitation of the system.
 
-## Working with the garbage collected heap
+## Working with a garbage collected heap
 
 A garbage collected system always has some heap structure wherein it stores the
 garbage collected data. The heap will then contain garbage collected handles,
-ie. self-references. Let's consider a singular handle `Handle<'_, u32>` stored
-on the heap and try to figure out what is the correct lifetime that we should
+ie. self-references. Let's consider a singular handle `Handle<'_, T>` stored on
+the heap and try to figure out what is the correct lifetime that we should
 ascribe to `'_`.
 
-Because this is a garbage collected system, as long as this `Handle<'_, u32>`
-exists on the heap (and is itself reachable from some root) then the `u32` is
-kept alive as well. It is incorrect for the `Handle` to be alive but the `u32`
-to be dead, but once the `Handle` is dropped by the garbage collector it is also
-free to drop the `u32`. This also applies to moving the `u32`: conceptually we
-can say that if the data is moved, then it should first be copied into a new
-location, then a new `Handle<'_, u32>` should replace the old handle, and only
-after that are we allowed to drop the original `u32`. (Also note how this
-relates with eg. tombstones in concrete garbage collector implementations.) When
-the heap is dropped, all `Handle`s within are likewise dropped, but if the heap
-stays alive until the end of the program then so do the `Handle`s. It thus seems
-like the correct lifetime is some `'a` that is determined by the heap's owner,
-but for convenience's sake we'll choose to use the `'static` lifetime here.
+Because this is a garbage collected system, as long as this `Handle<'_, T>`
+exists on the heap (and is itself reachable from some root) then the `T` is kept
+alive as well. It is incorrect for the `Handle` to be alive but the `T` to be
+dead, but once the `Handle` is dropped by the garbage collector it is also free
+to drop the `T`. This also applies to moving the `T`: conceptually we can say
+that if the data is moved, then it should first be copied into a new location,
+then a new `Handle<'_, T>` should replace the old handle, and only after that
+are we allowed to drop the original `T`. (Also note how this relates with eg.
+tombstones in concrete garbage collector implementations.) When the heap is
+dropped, all `Handle`s within are likewise dropped, but if the heap stays alive
+until the end of the program then so do the `Handle`s. It thus seems like the
+correct lifetime is some `'a` that is determined by the heap's owner, but for
+convenience's sake we'll choose to use the `'static` lifetime here.
 
-Now, consider a singular handle `Handle<'_, u32>` on the stack, and remember
-that these are unrooted handles and that our garbage collector does not do stack
-scanning. That means that the `u32` is only guaranteed to exist until the next
-garbage collection run: the fact that we have a `Handle<'_, u32>` in the first
-place guarantees that the `u32` does exist when we get the handle, but once
-garbage collection runs it might have dropped or moved the `u32` such that our
+Now, consider a singular handle `Handle<'_, T>` on the stack, and remember that
+these are unrooted handles and that our garbage collector does not do stack
+scanning. That means that the `T` is only guaranteed to exist until the next
+garbage collection run: the fact that we have a `Handle<'_, T>` in the first
+place guarantees that the `T` does exist when we get the handle, but once
+garbage collection runs it might have dropped or moved the `T` such that our
 handle no longer points to a valid value. The lifetime we can ascribe to
 `Handle` is thus some `'local` lifetime during which it is guaranteed that
 garbage collection does not happen. This `'local` lifetime is obviously shorter
@@ -64,8 +65,8 @@ Imagine we get a mutable reference to the handle on the heap and try to write a
 copy of our local handle into it:
 
 ```rust
-let local_handle: Handle<'local, u32> = local;
-let heap_mut: &mut Handle<'static, u32> = heap.get_mut();
+let local_handle: Handle<'local, T> = local;
+let heap_mut: &mut Handle<'static, T> = heap.get_mut();
 *heap_mut = local_handle;
 ```
 
@@ -78,13 +79,13 @@ parameter, equal to normal references, and using Rust references the above would
 look like this:
 
 ```rust
-let local_handle: &'local u32 = &0;
-let heap_mut: &mut &'static u32 = heap.get_mut();
+let local_handle: &'local T = &0;
+let heap_mut: &mut &'static T = heap.get_mut();
 *heap_mut = local_handle;
 ```
 
 This absolutely does not and should not compile: what the code here is saying is
-"`heap_mut` is a place that can store a reference to a `u32` as long as that
+"`heap_mut` is a place that can store a reference to a `T` as long as that
 reference is valid until the end of the program", but we're trying to store a
 reference that is only valid until the end of this function call. Our
 reference's lifetime is too short, and allowing the code to compile would lead
@@ -97,12 +98,12 @@ the kind of code that I was writing a safety comment on last weekend. Boiled
 down to its essentials, it looked much like this:
 
 ```rust
-let local_handle: Handle<'local, u32> = local;
-let heap_mut: &mut Handle<'static, u32> = heap.get_mut();
+let local_handle: Handle<'local, T> = local;
+let heap_mut: &mut Handle<'static, T> = heap.get_mut();
 // SAFETY: It is safe to shorten the lifetime of a Handle from the heap to a
 // local lifetime, as making a copy of the Handle must make it 'local and
 // conversely, storing a 'local Handle onto the heap makes it 'static.
-let heap_mut: &mut Handle<'local, u32> = unsafe { core::mem::transmute(heap_mut) };
+let heap_mut: &mut Handle<'local, T> = unsafe { core::mem::transmute(heap_mut) };
 *heap_mut = local_handle;
 ```
 
@@ -127,48 +128,47 @@ that takes any animal. Despite `Cat ≤ Animal` the order reverses in
 
 For lifetimes this means the following: when I ask you for a lifetime `'a`, in
 the covariant case you can give me a lifetime that is equal or longer than `'a`.
-Think for instance of a function taking `&'a u32`: it's okay if you call the
-function with a `&'static u32` as I will simply use it as if it had a shorter
+Think for instance of a function taking `&'a T`: it's okay if you call the
+function with a `&'static T` as I will simply use it as if it had a shorter
 lifetime. In the contravariant case you can give me a lifetime that is equal or
-_smaller_ than `'a`: to show this in Rust we use a `fn(&'a u32)`, or "give me a
+_smaller_ than `'a`: to show this in Rust we use a `fn(&'a T)`, or "give me a
 function that can be called with a reference of lifetime `'a`."
 
-Now when a function takes a `fn(&'a u32)` it means that there is some lifetime
+Now when a function takes a `fn(&'a T)` it means that there is some lifetime
 `'a` during which this function can be called. We can of course call the
 function with a reference that is valid for longer as that longer reference is
 still valid during the `'a` lifetime. But we can also "get ahead of callers" and
 expand the lifetime we require of them ourselves. We do this by reassigning the
-function into `fn(&'longer u32)` or `fn(&'static u32)`, ie. we assign a complex
-type (function taking one reference as a parameter) with a shorter lifetime
-parameter `'a` in place of a complex type with a longer lifetime parameter
-`'longer` or `'static`. Note that this doesn't mean that we expand the `'a`
-lifetime to `'longer` or `'static`, instead it means that we can simply use a
-complex type with a shorter lifetime in a place that requires a longer lifetime.
-In function parameter terms, we (spuriously) require a longer lifetime of its
-parameters, which then shortens back down to `'a` inside the function's actual
-contents.
+function into `fn(&'longer T)` or `fn(&'static T)`, ie. we assign a complex type
+(function taking one reference as a parameter) with a shorter lifetime parameter
+`'a` in place of a complex type with a longer lifetime parameter `'longer` or
+`'static`. Note that this doesn't mean that we expand the `'a` lifetime to
+`'longer` or `'static`, instead it means that we can simply use a complex type
+with a shorter lifetime in a place that requires a longer lifetime. In function
+parameter terms, we (spuriously) require a longer lifetime of its parameters,
+which then shortens back down to `'a` inside the function's actual contents.
 
 A great example of this in action comes from [Boxy](https://github.com/BoxyUwU)
 over in the Rust language Zulip:
 
 ```rust
-static BORROW: u32 = 0;
+static BORROW: T = 0;
 
-fn foo<'a>(fnptr: fn(&'a u32)) {
+fn foo<'a>(fnptr: fn(&'a T)) {
     // As the caller we can shrink the lifetime of `BORROW` before passing it to
     // `fnptr` which expects a borrow of lifetime `'a`
-    let local: &'a u32 = &BORROW;
+    let local: &'a T = &BORROW;
     fnptr(local);
 
     // Alternatively we can have the function pointer itself do this for all of
     // its callers!
-    let local_fnptr: fn(&'static u32) = fnptr;
+    let local_fnptr: fn(&'static T) = fnptr;
     local_fnptr(&BORROW);
 
     // It may also be helpful to realise we can *explicitly* perform this
     // implicit subtyping by writing it as a closure
-    let local_closure = |param: &'static u32| {
-        let param: &'a u32 = param;
+    let local_closure = |param: &'static T| {
+        let param: &'a T = param;
         fnptr(param);
     };
     local_closure(&BORROW);
@@ -376,9 +376,9 @@ handles that we pass to the `internal_set` as parameters just before the
 be evaluated for essentially this very reason), can safely be used in place of
 the function's parameters with the lifetime of "until the end of this call". And
 because this does not expand the `&Gc` reference lifetime to encompass until the
-end of the `internal_set` (just like using a `&'static u32` in place of a
-`&'a u32` does not expand `'a` to `'static`), the invalidation does not
-invalidate the already passed-in contravariant handles.
+end of the `internal_set` (just like using a `&'static T` in place of a `&'a T`
+does not expand `'a` to `'static`), the invalidation does not invalidate the
+already passed-in contravariant handles.
 
 Being able to thus pass "bound" handles into calls together with the `Gc<'_>`
 marker type is such an important thing that the loss of some binding convenience
