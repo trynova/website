@@ -307,6 +307,14 @@ pub(crate) fn set<'a>(
     }
     Ok(())
 }
+
+/// The unbind() and bind() functions come from this trait.
+unsafe trait Bindable {
+    type Of<'a>;
+    
+    fn unbind(self) -> Self::Of<'static>;
+    fn bind<'a>(self, gc: NoGcScope<'a, '_>) -> Self::Of<'a>;
+}
 ```
 
 This is the function used to set a value on an object, triggered whenever
