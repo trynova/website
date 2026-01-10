@@ -291,18 +291,25 @@ pub(crate) fn set<'a>(
     throw: bool,
     mut gc: GcScope<'a, '_>,
 ) -> JsResult<'a, ()> {
+    // By convention, always bind all parameters at function entry for safety.
     let nogc = gc.nogc();
     let o = o.bind(nogc);
     let p = p.bind(nogc);
     let v = v.bind(nogc);
+    
+    // Scope p for use after possible garbage collection safepoint.
     let scoped_p = p.scope(agent, nogc);
+    
+    // Actual function work starts.
     let success = o
         .unbind()
         .internal_set(agent, p.unbind(), v.unbind(), o.unbind().into(), gc.reborrow())
         .unbind()?;
+    
+    // Transition to a proven "no GC past this point" regime.
     let gc = gc.into_nogc();
-    let p = scoped_p.get(agent).bind(gc);
     if !success && throw {
+        let p = scoped_p.get(agent).bind(gc);
         return throw_set_error(agent, p, gc).into();
     }
     Ok(())
@@ -310,6 +317,7 @@ pub(crate) fn set<'a>(
 
 /// The unbind() and bind() functions come from this trait.
 unsafe trait Bindable {
+    /// This is always Self<'a>;
     type Of<'a>;
     
     fn unbind(self) -> Self::Of<'static>;
@@ -344,6 +352,7 @@ pub(crate) fn set<'a>(
     throw: bool,
     mut gc: GcScope<'a>,
 ) -> JsResult<'a, ()> {
+    // We should still "bind" all parameters at function entry for safety.
     let nogc = gc.nogc();
     let o = o.local();
     nogc.join(o);
@@ -351,15 +360,47 @@ pub(crate) fn set<'a>(
     nogc.join(p);
     let v = v.local();
     nogc.join(v);
+    
+    // We still have to scope p.
     let scoped_p = p.scope(agent, nogc);
+    
+    // Actual function work starts.
     let success = o.internal_set(agent, p, v, o.into(), gc.reborrow())?;
+    
+    // It's still useful to mark "no GC" regimes explicitly.
     let gc = gc.into_nogc();
-    let p = scoped_p.get(agent);
-    gc.join(p);
     if !success && throw {
+        let p = scoped_p.get(agent);
+        gc.join(p);
         return Err(throw_set_error(agent, p, gc));
     }
     Ok(())
+}
+
+/// Helper functions
+trait Handle {
+    /// This is always Self<'a>;
+    type Of<'a>;
+    
+    /// Create a local copy of Self: note that for contravariant lifetimes this
+    /// is fundamentally an unsafe operation.
+    fn local<'a>(&'a self) -> Self::Of<'a>;
+}
+
+impl<'gc, 'scope> GcScope<'gc, 'scope> {
+    /// Join a handle's lifetime together with a shared borrow of the
+    /// (guaranteed unique) GcScope.
+    #[inline(always)]
+    fn join<'a, T: Handle>(&'a self, handle: T::Of<'a>) {}
+}
+
+impl<'gc, 'scope> NoGcScope<'gc, 'scope> {
+    /// Join a handle's lifetime together with the GC lifetime of a GcScope.
+    /// Note that NoGcScope is a Copy type created from a shared borrow of the
+    /// (guaranteed unique) GcScope, meaning that this joins the handle's
+    /// lifetime together with a shared borrow of that GcScope.
+    #[inline(always)]
+    fn join<T: Handle>(self, handle: T::Of<'gc>) {}
 }
 ```
 
