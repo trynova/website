@@ -466,3 +466,46 @@ benefit from contravariant lifetimes joining the two together.
 I expect it might bring some surprising and positive results! Either that, or I
 am being a total crackpot. I guess time and effort will tell. Until then, stay
 contrary!
+
+### Update (11th of January, 2026)
+
+This post received some excellent feedback / pushback on
+[Lobsters](https://lobste.rs/s/jydyuw/garbage_collected_handles_are_lifetime).
+While I do not agree with what is, perhaps, the thrust of the feedback
+("contravariance has nothing to do with GC or self-reference" or in other words
+that this entire approach is flawed), the following discussion did strongly
+underline a meaningful point: a fully safe representation of unrooted handles is
+possible as shown by [`gc-arena`](https://github.com/kyren/gc-arena) and it
+relies on _invariance_ which can be viewed as a combination of covariance and
+contravariance.
+
+In terms of contravariant references, this is exactly what I get with the
+combination of a contravariant reference and a covariant reference of a proof
+value:
+
+```rust
+let handle: Handle<'_> = ...; // Contravariant.
+let proof: &Proof = ...; // Covariant.
+handle.join(proof); // Invariant, sort of.
+```
+
+The difference between the proven `gc-arena` solution based on invariance and my
+approach based on contravariant references (currently unsound/incomplete,
+requiring runtime checks or new Rust features to make it safe) is, I believe
+(again without proof), that the invariant approach gives the "least upper bound"
+of the solution with a lot of limitations (basically, garbage collection must
+happen outside of the interpreter's Rust call stack thereby forcing a stackless
+interpreter design, and heap data cannot be accessed mutably even in a
+single-threaded system; I recommend reading
+[this](https://kyju.org/blog/rust-safe-garbage-collection/) blog post and its
+[follow-up](https://kyju.org/blog/piccolo-a-stackless-lua-interpreter/) for more
+details) whereas the contravariant approach seems to give the "greatest lower
+bound" with less limitations (garbage collection can happen inside the
+interpreter's Rust call stack and the heap can be accessed mutably but of course
+only within Rust's normal aliasing rules).
+
+That being said, if you want a solution that works and gives compile-time
+guarantees today in a fully sound way, `gc-arena` is your ticket to victory. Me?
+I plan on researching where this contrarian road takes me, and until I find a
+solution (or a dead-end wall that cannot be overcome) I will accept some runtime
+checks.
